@@ -1,0 +1,9 @@
+<Project>
+	<ItemGroup>
+		<PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="all" />
+	</ItemGroup>
+	<PropertyGroup>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+</Project>
+

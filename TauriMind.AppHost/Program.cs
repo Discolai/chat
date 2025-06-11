@@ -1,5 +1,10 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.Application>("application");
+var application = builder.AddProject<Projects.Application>("application")
+    .WithUrlForEndpoint("https", url =>
+    {
+        url.DisplayText = "Scalar (HTTPS)";
+        url.Url = "/scalar";
+    });
 
 builder.Build().Run();

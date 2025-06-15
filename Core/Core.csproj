@@ -10,7 +10,6 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="9.1.2" />
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.55.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.55.0-alpha" />
   </ItemGroup>
 
   <ItemGroup>

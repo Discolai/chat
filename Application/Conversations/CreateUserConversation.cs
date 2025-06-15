@@ -1,4 +1,5 @@
-﻿using Core.User;
+﻿using Core.Conversation;
+using Core.User;
 using Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -7,7 +8,7 @@ namespace Application.Conversations;
 public class CreateUserConversationRequest
 {
     public required AIModel Model { get; set; }
-    public required string InitialPrompt { get; set; }
+    public string? InitialPrompt { get; set; }
 }
 
 public static class CreateUserConversation
@@ -19,6 +20,13 @@ public static class CreateUserConversation
         {
             return TypedResults.NotFound();
         }
-        return TypedResults.Ok(await user.CreateConversation(request.Model, request.InitialPrompt));
+        var conversationInfo = await user.CreateConversation(request.Model);
+        if (!string.IsNullOrEmpty(request.InitialPrompt))
+        {
+            await clusterClient
+                .GetGrain<IConversationGrain>(conversationInfo.Id, userId.ToString())
+                .Prompt(request.InitialPrompt);
+        }
+        return TypedResults.Ok(conversationInfo);
     }
 }

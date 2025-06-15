@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using System.Text;
 
 namespace Core.Conversation;
 
@@ -9,7 +10,10 @@ namespace Core.Conversation;
 public interface IConversationGrain : IGrainWithGuidCompoundKey
 {
     [Alias("SetModel")]
-    Task<ConversationInfo> Initialize(AIModel model, string initialPrompt);
+    Task<ConversationInfo> Initialize(AIModel model);
+
+    [Alias("Delete")]
+    Task Delete();
 
     [Alias("Prompt")]
     Task Prompt(string prompt);
@@ -23,12 +27,14 @@ internal class ConversationGrain : Grain, IConversationGrain
     private readonly IPersistentState<ConversationInfo> _infoStore;
     private readonly IPersistentState<MessagesState> _messagesStore;
     private readonly IChatCompletionService _chatCompletionService;
-    private readonly IHubContext<ConversationHub> _conversationHub;
+    private readonly IHubContext<ConversationHub, IConversationClient> _conversationHub;
     private readonly ChatHistory _chatHistory = [];
     private Task? _promptTask = null;
+    private Guid _conversationId;
+    private string _userId = null!;
 
     public ConversationGrain([PersistentState("conversationInfo")] IPersistentState<ConversationInfo> infoState,
-        [PersistentState("messages")] IPersistentState<MessagesState> messages, IChatCompletionService chatCompletionService, IHubContext<ConversationHub> conversationHub)
+        [PersistentState("messages")] IPersistentState<MessagesState> messages, IChatCompletionService chatCompletionService, IHubContext<ConversationHub, IConversationClient> conversationHub)
     {
         _infoStore = infoState;
         _messagesStore = messages;
@@ -38,28 +44,30 @@ internal class ConversationGrain : Grain, IConversationGrain
 
     public override Task OnActivateAsync(CancellationToken cancellationToken)
     {
+        _chatHistory.AddSystemMessage("You are a chat assistant. Your output should always be written as markdown.");
         if (_messagesStore.RecordExists)
         {
             _chatHistory.AddRange(GetChatHistory(_messagesStore.State));
         }
 
+        _conversationId = this.GetPrimaryKey(out _userId);
         return base.OnActivateAsync(cancellationToken);
     }
 
     private static IEnumerable<ChatMessageContent> GetChatHistory(MessagesState messageState) => messageState.Messages.Select(x => new ChatMessageContent
     {
-        Role = x.Type == MessageType.Prompt ? AuthorRole.User : AuthorRole.Assistant,
+        Role = x.Role == MessageRole.User ? AuthorRole.User : AuthorRole.Assistant,
         Content = x.Content,
     });
 
     public ValueTask<IEnumerable<Message>> GetMessages() =>
         ValueTask.FromResult(_messagesStore.RecordExists ? (IEnumerable<Message>)_messagesStore.State.Messages : []);
 
-    public async Task<ConversationInfo> Initialize(AIModel model, string initialPrompt)
+    public async Task<ConversationInfo> Initialize(AIModel model)
     {
         if (!_infoStore.RecordExists)
         {
-            _infoStore.State = new ConversationInfo { Id = this.GetPrimaryKey(), Model = model, Title = initialPrompt };
+            _infoStore.State = new ConversationInfo { Id = this.GetPrimaryKey(), Model = model, Title = "New chat" };
         }
         else
         {
@@ -75,7 +83,7 @@ internal class ConversationGrain : Grain, IConversationGrain
             throw new ConversationAlreadyInitializedException();
         }
         await _infoStore.WriteStateAsync();
-        _ = Prompt(initialPrompt);
+        await _messagesStore.WriteStateAsync();
         return _infoStore.State;
     }
 
@@ -91,14 +99,27 @@ internal class ConversationGrain : Grain, IConversationGrain
 
     private async Task PerformPrompt(string prompt)
     {
-        var persistedMessagesCount = _messagesStore.State.Messages.Count;
-        DateTime messagesPersistedTimeStamp = DateTime.UtcNow;
         _chatHistory.AddUserMessage(prompt);
-        _messagesStore.State.Messages.Add(new Message
+        var promptMessage = new Message
         {
-            Type = MessageType.Prompt,
+            Id = Guid.NewGuid(),
+            Role = MessageRole.User,
             Content = prompt
-        });
+        };
+        _messagesStore.State.Messages.Add(promptMessage);
+        await _messagesStore.WriteStateAsync();
+        await _conversationHub.Clients.All.PromptReceived(_conversationId, promptMessage, _messagesStore.Etag);
+
+        var responseMessage = new Message
+        {
+            Id = Guid.NewGuid(),
+            Role = MessageRole.Assistant,
+            Content = "",
+        };
+        _messagesStore.State.Messages.Add(responseMessage);
+        var contentBuilder = new StringBuilder();
+
+        await _conversationHub.Clients.All.MessageStart(_conversationId);
 
         await foreach (var item in _chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
         {
@@ -106,27 +127,28 @@ internal class ConversationGrain : Grain, IConversationGrain
             {
                 continue;
             }
-            _chatHistory.AddAssistantMessage(item.Content);
-            _messagesStore.State.Messages.Add(new Message
-            {
-                Type = MessageType.Response,
-                Content = item.Content,
-            });
-            await _conversationHub.Clients.All.SendAsync("message", item.Content);
-            if (persistedMessagesCount != _messagesStore.State.Messages.Count && messagesPersistedTimeStamp - DateTime.UtcNow > TimeSpan.FromSeconds(5))
-            {
-                await _messagesStore.WriteStateAsync();
-                persistedMessagesCount = _messagesStore.State.Messages.Count;
-            }
+            contentBuilder.Append(item.Content);
+            await _conversationHub.Clients.All.MessageContent(_conversationId, responseMessage.Id, item.Content);
+        }
+        responseMessage.Content = contentBuilder.ToString();
+        _chatHistory.AddAssistantMessage(responseMessage.Content);
+        await _messagesStore.WriteStateAsync();
+
+        await _conversationHub.Clients.All.MessageEnd(_conversationId, responseMessage, _messagesStore.Etag);
+    }
+
+    public async Task Delete()
+    {
+        if (_infoStore.RecordExists)
+        {
+            await _infoStore.ClearStateAsync();
+        }
+        if (_messagesStore.RecordExists)
+        {
+            await _messagesStore.ClearStateAsync();
         }
 
-        // invoke model
-        // handle reasoning
-        // handle response
-        if (persistedMessagesCount != _messagesStore.State.Messages.Count)
-        {
-            await _messagesStore.WriteStateAsync();
-        }
+        DeactivateOnIdle();
     }
 }
 

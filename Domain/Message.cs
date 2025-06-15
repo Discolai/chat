@@ -5,7 +5,9 @@
 public class Message
 {
     [Id(0)]
-    public required MessageType Type { get; init; }
+    public Guid Id { get; set; }
     [Id(1)]
-    public required string Content { get; init; }
+    public required MessageRole Role { get; init; }
+    [Id(2)]
+    public required string Content { get; set; }
 }

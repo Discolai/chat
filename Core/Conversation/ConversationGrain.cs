@@ -131,7 +131,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         };
         _messagesStore.State.Messages.Add(promptMessage);
         await _messagesStore.WriteStateAsync();
-        await _conversationHub.Clients.All.PromptReceived(_conversationId, promptMessage, _messagesStore.Etag);
+        await _conversationHub.Clients.User(_userId).PromptReceived(_conversationId, promptMessage, _messagesStore.Etag);
 
         var responseMessage = new Message
         {
@@ -141,7 +141,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         };
         var contentBuilder = new StringBuilder();
 
-        await _conversationHub.Clients.All.MessageStart(_conversationId);
+        await _conversationHub.Clients.User(_userId).MessageStart(_conversationId);
         try
         {
             await foreach (var item in _chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
@@ -151,7 +151,7 @@ internal class ConversationGrain : Grain, IConversationGrain
                     continue;
                 }
                 contentBuilder.Append(item.Content);
-                await _conversationHub.Clients.All.MessageContent(_conversationId, responseMessage.Id, item.Content);
+                await _conversationHub.Clients.User(_userId).MessageContent(_conversationId, responseMessage.Id, item.Content);
             }
         }
         catch (Exception e)
@@ -160,7 +160,7 @@ internal class ConversationGrain : Grain, IConversationGrain
 
             promptMessage.HasError = true;
             await _messagesStore.WriteStateAsync();
-            await _conversationHub.Clients.All.MessageError(_conversationId, promptMessage.Id, _messagesStore.Etag);
+            await _conversationHub.Clients.User(_userId).MessageError(_conversationId, promptMessage.Id, _messagesStore.Etag);
             return;
         }
         responseMessage.Content = contentBuilder.ToString();
@@ -168,7 +168,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         _messagesStore.State.Messages.Add(responseMessage);
         await _messagesStore.WriteStateAsync();
 
-        await _conversationHub.Clients.All.MessageEnd(_conversationId, responseMessage, _messagesStore.Etag);
+        await _conversationHub.Clients.User(_userId).MessageEnd(_conversationId, responseMessage, _messagesStore.Etag);
     }
 
     public async Task Delete()

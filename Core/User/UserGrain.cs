@@ -16,7 +16,7 @@ public interface IUserGrain : IGrainWithGuidKey
     ValueTask<List<ConversationInfo>> GetConversations();
 
     [Alias("GetConversationMessages")]
-    ValueTask<IEnumerable<Message>> GetConversationMessages(Guid conversationId);
+    ValueTask<GetMessagesResponse> GetConversationMessages(Guid conversationId, string? ifNoneMatch);
 }
 
 internal class UserGrain : Grain, IUserGrain
@@ -60,15 +60,15 @@ internal class UserGrain : Grain, IUserGrain
         return true;
     }
 
-    public async ValueTask<IEnumerable<Message>> GetConversationMessages(Guid conversationId)
+    public async ValueTask<GetMessagesResponse> GetConversationMessages(Guid conversationId, string? ifNoneMatch)
     {
         if (!_conversationsStore.RecordExists || !_conversationsStore.State.Conversations.Any(x => x.Id == conversationId))
         {
-            return [];
+            return GetMessagesResponse.Empty;
         }
 
         var conversation = GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKey().ToString());
-        return await conversation.GetMessages();
+        return await conversation.GetMessages(ifNoneMatch);
     }
 
     public ValueTask<List<ConversationInfo>> GetConversations() => ValueTask.FromResult(_conversationsStore.State.Conversations);

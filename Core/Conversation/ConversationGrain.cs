@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using System.Text;
@@ -19,7 +20,7 @@ public interface IConversationGrain : IGrainWithGuidCompoundKey
     Task Prompt(string prompt);
 
     [Alias("GetMessages")]
-    ValueTask<IEnumerable<Message>> GetMessages();
+    ValueTask<GetMessagesResponse> GetMessages(string? ifNoneMatch);
 }
 
 internal class ConversationGrain : Grain, IConversationGrain
@@ -28,23 +29,29 @@ internal class ConversationGrain : Grain, IConversationGrain
     private readonly IPersistentState<MessagesState> _messagesStore;
     private readonly IChatCompletionService _chatCompletionService;
     private readonly IHubContext<ConversationHub, IConversationClient> _conversationHub;
+    private readonly ILogger<ConversationGrain> _logger;
     private readonly ChatHistory _chatHistory = [];
     private Task? _promptTask = null;
     private Guid _conversationId;
     private string _userId = null!;
 
-    public ConversationGrain([PersistentState("conversationInfo")] IPersistentState<ConversationInfo> infoState,
-        [PersistentState("messages")] IPersistentState<MessagesState> messages, IChatCompletionService chatCompletionService, IHubContext<ConversationHub, IConversationClient> conversationHub)
+    public ConversationGrain(
+        [PersistentState("conversationInfo")] IPersistentState<ConversationInfo> infoState,
+        [PersistentState("messages")] IPersistentState<MessagesState> messages,
+        IChatCompletionService chatCompletionService, 
+        IHubContext<ConversationHub, IConversationClient> conversationHub,
+        ILogger<ConversationGrain> logger)
     {
         _infoStore = infoState;
         _messagesStore = messages;
         _chatCompletionService = chatCompletionService;
         _conversationHub = conversationHub;
+        _logger = logger;
     }
 
     public override Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        _chatHistory.AddSystemMessage("You are a chat assistant. Your output should always be written as markdown.");
+        _chatHistory.AddSystemMessage("You are a chat assistant. If you need to perform any formatting of your output, always use markdown (commonmark).");
         if (_messagesStore.RecordExists)
         {
             _chatHistory.AddRange(GetChatHistory(_messagesStore.State));
@@ -60,8 +67,19 @@ internal class ConversationGrain : Grain, IConversationGrain
         Content = x.Content,
     });
 
-    public ValueTask<IEnumerable<Message>> GetMessages() =>
-        ValueTask.FromResult(_messagesStore.RecordExists ? (IEnumerable<Message>)_messagesStore.State.Messages : []);
+    public ValueTask<GetMessagesResponse> GetMessages(string? ifNoneMatch)
+    {
+        if (!_messagesStore.RecordExists)
+        {
+            return ValueTask.FromResult(GetMessagesResponse.Empty);
+        }
+        if (!string.IsNullOrEmpty(ifNoneMatch) &&  ifNoneMatch == _messagesStore.Etag)
+        {
+            return ValueTask.FromResult(GetMessagesResponse.Match(ifNoneMatch));
+        }
+
+        return ValueTask.FromResult(new GetMessagesResponse(_messagesStore.State.Messages, _messagesStore.Etag));
+    }
 
     public async Task<ConversationInfo> Initialize(AIModel model)
     {
@@ -116,22 +134,33 @@ internal class ConversationGrain : Grain, IConversationGrain
             Role = MessageRole.Assistant,
             Content = "",
         };
-        _messagesStore.State.Messages.Add(responseMessage);
         var contentBuilder = new StringBuilder();
 
         await _conversationHub.Clients.All.MessageStart(_conversationId);
-
-        await foreach (var item in _chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
+        try
         {
-            if (item?.Content is null)
+            await foreach (var item in _chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
             {
-                continue;
+                if (item?.Content is null)
+                {
+                    continue;
+                }
+                contentBuilder.Append(item.Content);
+                await _conversationHub.Clients.All.MessageContent(_conversationId, responseMessage.Id, item.Content);
             }
-            contentBuilder.Append(item.Content);
-            await _conversationHub.Clients.All.MessageContent(_conversationId, responseMessage.Id, item.Content);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error producing chat response.");
+
+            promptMessage.HasError = true;
+            await _messagesStore.WriteStateAsync();
+            await _conversationHub.Clients.All.MessageError(_conversationId, promptMessage.Id, _messagesStore.Etag);
+            return;
         }
         responseMessage.Content = contentBuilder.ToString();
         _chatHistory.AddAssistantMessage(responseMessage.Content);
+        _messagesStore.State.Messages.Add(responseMessage);
         await _messagesStore.WriteStateAsync();
 
         await _conversationHub.Clients.All.MessageEnd(_conversationId, responseMessage, _messagesStore.Etag);
@@ -155,3 +184,14 @@ internal class ConversationGrain : Grain, IConversationGrain
 [GenerateSerializer]
 [Alias("MessagesState")]
 public record MessagesState(List<Message> Messages);
+
+[GenerateSerializer]
+[Alias("Core.Conversation.GetMessagesResponse")]
+public record GetMessagesResponse(IEnumerable<Message> Messages, string? ETag)
+{
+    public bool NoChange(string? ifNoMatch) => !string.IsNullOrEmpty(ifNoMatch) && ifNoMatch == ETag;
+
+    public static GetMessagesResponse Match(string eTag) => new([], eTag);
+
+    public static GetMessagesResponse Empty { get; } = new([], null);
+}

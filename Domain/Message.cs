@@ -10,4 +10,6 @@ public class Message
     public required MessageRole Role { get; init; }
     [Id(2)]
     public required string Content { get; set; }
+    [Id(3)]
+    public bool HasError { get; set; }
 }

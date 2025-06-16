@@ -12,6 +12,8 @@ public interface IConversationClient
     Task PromptReceived(Guid conversationId, Message promptMessage, string eTag);
 
     Task MessageEnd(Guid conversationId, Message message, string eTag);
+
+    Task MessageError(Guid conversationId, Guid promptMessageId, string eTag);
 }
 
 public class ConversationHub : Hub<IConversationClient>

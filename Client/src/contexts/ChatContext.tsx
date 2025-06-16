@@ -148,6 +148,27 @@ export const ChatProvider = ({
     "PromptReceived"
   );
 
+  useHubMethod(
+    (conversationId: string, promptMessageId: string, eTag: string) => {
+      const messages = conversationMessages.current.get(conversationId);
+      if (!messages) {
+        return;
+      }
+      messages.eTag = eTag;
+      messages.messages = messages.messages.map((message) => {
+        if (message.id === promptMessageId) {
+          message.hasError = true;
+        }
+        return message;
+      });
+      if (conversationId === currentConversationId) {
+        setCurrentConversationMessages(messages);
+      }
+    },
+    [currentConversationId],
+    "MessageError"
+  );
+
   const createConversation = useCallback(
     async (initialPrompt: string | null | undefined) => {
       const newConversation = await apiClient.api.users

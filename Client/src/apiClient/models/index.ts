@@ -130,6 +130,7 @@ export function deserializeIntoCreateUserConversationRequest(createUserConversat
 export function deserializeIntoMessage(message: Partial<Message> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
         "content": n => { message.content = n.getStringValue(); },
+        "hasError": n => { message.hasError = n.getBooleanValue(); },
         "id": n => { message.id = n.getGuidValue(); },
         "role": n => { message.role = n.getEnumValue<MessageRole>(MessageRoleObject); },
     }
@@ -149,6 +150,10 @@ export interface Message extends Parsable {
      * The content property
      */
     content?: string | null;
+    /**
+     * The hasError property
+     */
+    hasError?: boolean | null;
     /**
      * The id property
      */
@@ -208,6 +213,7 @@ export function serializeCreateUserConversationRequest(writer: SerializationWrit
 export function serializeMessage(writer: SerializationWriter, message: Partial<Message> | undefined | null = {}) : void {
     if (message) {
         writer.writeStringValue("content", message.content);
+        writer.writeBooleanValue("hasError", message.hasError);
         writer.writeGuidValue("id", message.id);
         writer.writeEnumValue<MessageRole>("role", message.role);
     }

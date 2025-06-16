@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { MessageBox } from "./Message";
+import { MessageBox } from "./MessageBox";
 import { useChatContext } from "@/contexts/ChatContext";
 import { SmartToy as BotIcon } from "@mui/icons-material";
 import { useRef, useEffect } from "react";

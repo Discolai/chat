@@ -185,6 +185,13 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "if-none-match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -280,6 +287,9 @@
           },
           "content": {
             "type": "string"
+          },
+          "hasError": {
+            "type": "boolean"
           }
         }
       },

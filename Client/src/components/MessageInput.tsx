@@ -53,6 +53,7 @@ export const MessageInput = () => {
   return (
     <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
       <TextField
+        inputRef={(element: HTMLInputElement) => element?.focus()}
         fullWidth
         multiline
         value={message}
@@ -78,7 +79,7 @@ export const MessageInput = () => {
         }}
       />
       <IconButton
-        disabled
+        disabled={!message.trim()}
         onClick={() => handleSendMessage()}
         sx={{
           backgroundColor: "#10a37f",

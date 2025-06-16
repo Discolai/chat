@@ -7,7 +7,7 @@ namespace Core.User;
 public interface IUserGrain : IGrainWithStringKey
 {
     [Alias("CreateConversation")]
-    Task<ConversationInfo> CreateConversation(AIModel model);
+    Task<ConversationInfo> CreateConversation(AIModel model, string? initialPrompt);
 
     [Alias("DeleteConversation")]
     Task<bool> DeleteConversation(Guid conversationId);
@@ -28,12 +28,12 @@ internal class UserGrain : Grain, IUserGrain
         _conversationsStore = conversationsState;
     }
 
-    public async Task<ConversationInfo> CreateConversation(AIModel model)
+    public async Task<ConversationInfo> CreateConversation(AIModel model, string? initialPrompt)
     {
         var conversationId = Guid.NewGuid();
         var conversation = GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKeyString());
 
-        var conversationInfo = await conversation.Initialize(model);
+        var conversationInfo = await conversation.Initialize(model, initialPrompt);
 
         if (!_conversationsStore.RecordExists)
         {

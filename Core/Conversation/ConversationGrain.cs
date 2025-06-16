@@ -11,7 +11,7 @@ namespace Core.Conversation;
 public interface IConversationGrain : IGrainWithGuidCompoundKey
 {
     [Alias("SetModel")]
-    Task<ConversationInfo> Initialize(AIModel model);
+    Task<ConversationInfo> Initialize(AIModel model, string? initialPrompt);
 
     [Alias("Delete")]
     Task Delete();
@@ -81,11 +81,16 @@ internal class ConversationGrain : Grain, IConversationGrain
         return ValueTask.FromResult(new GetMessagesResponse(_messagesStore.State.Messages, _messagesStore.Etag));
     }
 
-    public async Task<ConversationInfo> Initialize(AIModel model)
+    public async Task<ConversationInfo> Initialize(AIModel model, string? initialPrompt)
     {
+        var title = "New chat";
+        if (!string.IsNullOrEmpty(initialPrompt))
+        {
+            title = initialPrompt.Substring(0, Math.Min(initialPrompt.Length, 30));
+        }
         if (!_infoStore.RecordExists)
         {
-            _infoStore.State = new ConversationInfo { Id = this.GetPrimaryKey(), Model = model, Title = "New chat" };
+            _infoStore.State = new ConversationInfo { Id = this.GetPrimaryKey(), Model = model, Title = title };
         }
         else
         {

@@ -19,7 +19,7 @@ public static class CreateUserConversation
         {
             return TypedResults.NotFound();
         }
-        var conversationInfo = await user.CreateConversation(request.Model);
+        var conversationInfo = await user.CreateConversation(request.Model, request.InitialPrompt);
         if (!string.IsNullOrEmpty(request.InitialPrompt))
         {
             await clusterClient

@@ -3,6 +3,9 @@ import { Box, TextField, IconButton } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { Send as SendIcon } from "@mui/icons-material";
+import { useMutation } from "@tanstack/react-query";
+
+export const MessageInputMutationKey = ["MessageInput"];
 
 export const MessageInput = () => {
   const { addChatMessage, createConversation, currentConversation } =
@@ -15,39 +18,36 @@ export const MessageInput = () => {
     setMessage(e.currentTarget.value);
   }, []);
 
-  const handleSendMessage = useCallback(async () => {
-    if (!message.trim()) return;
+  const sendMutation = useMutation({
+    async mutationFn() {
+      if (!message.trim()) return;
 
-    let targetConversationId = currentConversation?.id;
+      let targetConversationId = currentConversation?.id;
+      setMessage("");
 
-    // If no conversation is selected, create a new one
-    if (!targetConversationId) {
-      targetConversationId = await createConversation(message);
-      await navigate({
-        to: "/conversation/$conversationId",
-        params: { conversationId: targetConversationId },
-      });
-    } else {
-      await addChatMessage(targetConversationId, message);
-    }
-    setMessage("");
-  }, [
-    addChatMessage,
-    createConversation,
-    currentConversation?.id,
-    message,
-    navigate,
-  ]);
+      // If no conversation is selected, create a new one
+      if (!targetConversationId) {
+        targetConversationId = await createConversation(message);
+        void navigate({
+          to: "/conversation/$conversationId",
+          params: { conversationId: targetConversationId },
+        });
+      } else {
+        void addChatMessage(targetConversationId, message);
+      }
+    },
+    mutationKey: MessageInputMutationKey,
+  });
 
   const handleKeyPress = useCallback(
-    async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter" && !(e.shiftKey || e.ctrlKey)) {
         e.stopPropagation();
         e.preventDefault();
-        await handleSendMessage();
+        sendMutation.mutate();
       }
     },
-    [handleSendMessage]
+    [sendMutation]
   );
 
   return (
@@ -60,36 +60,22 @@ export const MessageInput = () => {
         onChange={handleMessageChange}
         maxRows={4}
         onKeyDown={handleKeyPress}
-        placeholder="How can I help you today?"
+        placeholder="Write a message..."
         variant="outlined"
         sx={{
           "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
-            backgroundColor: "#f7f7f8",
-            "& fieldset": {
-              borderColor: "#e5e5e5",
-            },
-            "&:hover fieldset": {
-              borderColor: "#10a37f",
-            },
-            "&.Mui-focused fieldset": {
-              borderColor: "#10a37f",
-            },
+            backgroundColor: "background.paper",
           },
         }}
       />
       <IconButton
         disabled={!message.trim()}
-        onClick={() => handleSendMessage()}
+        onClick={() => sendMutation.mutate()}
+        color="primary"
         sx={{
-          backgroundColor: "#10a37f",
-          color: "white",
-          "&:hover": {
-            backgroundColor: "#0d8f6f",
-          },
           "&:disabled": {
-            backgroundColor: "#e5e5e5",
-            color: "#999",
+            backgroundColor: "grey.100",
+            color: "grey.400",
           },
         }}
       >

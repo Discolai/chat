@@ -9,7 +9,6 @@ const ChatArea = () => {
         flex: 1,
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "#ffffff",
       }}
     >
       <MessagesSection />
@@ -17,8 +16,7 @@ const ChatArea = () => {
       <Box
         sx={{
           p: 2,
-          borderTop: "1px solid #e5e5e5",
-          backgroundColor: "#ffffff",
+          backgroundColor: "background.default",
         }}
       >
         <Box sx={{ maxWidth: "800px", mx: "auto" }}>

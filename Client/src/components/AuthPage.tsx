@@ -11,8 +11,6 @@ const AuthPage: React.FC = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#f5f5f5",
-        padding: 2,
       }}
     >
       <Box

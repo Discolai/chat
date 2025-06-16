@@ -1,8 +1,9 @@
 import { Box, Typography } from "@mui/material";
 import { MessageBox } from "./MessageBox";
 import { useChatContext } from "@/contexts/ChatContext";
-import { SmartToy as BotIcon } from "@mui/icons-material";
 import { useRef, useEffect } from "react";
+import ThinkingAnimation from "./ThinkingAnimation";
+import { useMessageIsProcessing } from "@/hooks/useMessageIsProcessing";
 
 export const MessagesSection = () => {
   const { currentConversationMessages, currentStreamingMessage } =
@@ -17,6 +18,8 @@ export const MessagesSection = () => {
   useEffect(() => {
     scrollToBottom();
   }, [currentConversationMessages, currentStreamingMessage]);
+
+  const messageIsProcessing = useMessageIsProcessing();
   return (
     <Box
       sx={{
@@ -39,7 +42,6 @@ export const MessagesSection = () => {
             gap: 2,
           }}
         >
-          <BotIcon sx={{ fontSize: 48, color: "#10a37f" }} />
           <Typography variant="h5" color="text.secondary">
             How can I help you today?
           </Typography>
@@ -49,6 +51,7 @@ export const MessagesSection = () => {
           {currentConversationMessages.messages.map((message) => (
             <MessageBox key={message.id} message={message} />
           ))}
+          {messageIsProcessing ? <ThinkingAnimation /> : null}
         </Box>
       )}
       {currentStreamingMessage ? (

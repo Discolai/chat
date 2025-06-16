@@ -21,8 +21,9 @@ import {
   ApiClientProvider,
   useApiClient,
 } from "./contexts/ApiClientContext.tsx";
-import { createTheme, ThemeProvider } from "@mui/material";
+import { ThemeProvider } from "@mui/material";
 import { useClerkAppereance } from "./hooks/useClerkAppereance.ts";
+import { theme } from "./theme.ts";
 
 const queryClient = new QueryClient();
 // Create a new router instance
@@ -50,8 +51,6 @@ declare module "@tanstack/react-router" {
     router: typeof router;
   }
 }
-
-const theme = createTheme();
 
 const App = () => {
   const clerkApperance = useClerkAppereance();

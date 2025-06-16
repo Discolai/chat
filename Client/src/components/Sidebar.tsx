@@ -8,6 +8,7 @@ import {
   IconButton,
   Button,
   Divider,
+  useTheme,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -56,42 +57,37 @@ const Sidebar: React.FC = () => {
     },
     [currentConversationId, deleteConversation, navigate]
   );
+
+  const theme = useTheme();
+
   return (
     <Box
       sx={{
         width: 260,
-        backgroundColor: "#171717",
-        color: "white",
+        backgroundColor: "background.paper",
         display: "flex",
         flexDirection: "column",
-        borderRight: "1px solid #2d2d2d",
+        borderRight: `1px solid ${theme.palette.divider}`,
       }}
     >
       <Box sx={{ p: 2 }}>
         <Button
           fullWidth
           variant="outlined"
+          color="primary"
           startIcon={<AddIcon />}
           onClick={handleNewChat}
-          sx={{
-            color: "white",
-            borderColor: "#4d4d4d",
-            "&:hover": {
-              borderColor: "#6d6d6d",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-            },
-          }}
         >
           New chat
         </Button>
       </Box>
 
-      <Divider sx={{ borderColor: "#2d2d2d" }} />
+      <Divider />
 
       <Box sx={{ flex: 1, overflow: "auto" }}>
         {conversations.length === 0 ? (
           <Box sx={{ p: 2, textAlign: "center" }}>
-            <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+            <Typography variant="body2" color="text.secondary">
               No conversations yet
             </Typography>
           </Box>
@@ -104,10 +100,10 @@ const Sidebar: React.FC = () => {
                 sx={{
                   backgroundColor:
                     currentConversationId === conversation.id
-                      ? "#2d2d2d"
+                      ? "grey.100"
                       : "transparent",
                   "&:hover": {
-                    backgroundColor: "#2d2d2d",
+                    backgroundColor: "grey.50",
                   },
                 }}
               >
@@ -121,15 +117,15 @@ const Sidebar: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <ChatIcon
-                    sx={{ fontSize: 16, color: "rgba(255, 255, 255, 0.6)" }}
-                  />
+                  <ChatIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                   <ListItemText
                     primary={conversation.title}
-                    primaryTypographyProps={{
-                      fontSize: "14px",
-                      noWrap: true,
-                      color: "white",
+                    slotProps={{
+                      primary: {
+                        fontSize: "14px",
+                        noWrap: true,
+                        color: "text.primary",
+                      },
                     }}
                     sx={{ flex: 1 }}
                   />
@@ -139,10 +135,10 @@ const Sidebar: React.FC = () => {
                       handleDeleteConversation(e, conversation.id!)
                     }
                     sx={{
-                      color: "rgba(255, 255, 255, 0.6)",
+                      color: "text.secondary",
                       "&:hover": {
-                        color: "white",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                        color: "text.primary",
+                        backgroundColor: "grey.100",
                       },
                     }}
                   >
@@ -155,7 +151,6 @@ const Sidebar: React.FC = () => {
         )}
       </Box>
 
-      {/* User Profile Section */}
       <Divider sx={{ borderColor: "#2d2d2d" }} />
       <Box
         sx={{
@@ -170,7 +165,7 @@ const Sidebar: React.FC = () => {
           <Typography
             variant="body2"
             sx={{
-              color: "white",
+              color: "text.primary",
               fontSize: "14px",
               fontWeight: 500,
               overflow: "hidden",
@@ -183,7 +178,7 @@ const Sidebar: React.FC = () => {
           <Typography
             variant="caption"
             sx={{
-              color: "rgba(255, 255, 255, 0.6)",
+              color: "text.secondary",
               fontSize: "12px",
               overflow: "hidden",
               textOverflow: "ellipsis",

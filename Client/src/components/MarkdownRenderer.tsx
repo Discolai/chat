@@ -1,5 +1,5 @@
 import ReactMarkdown, { type Components } from "react-markdown";
-import { Typography, Paper, Link } from "@mui/material";
+import { Typography, Paper, Link, useTheme } from "@mui/material";
 import "highlight.js/styles/github.css";
 import hljs from "highlight.js";
 
@@ -8,6 +8,7 @@ interface MarkdownRendererProps {
 }
 
 const MarkdownRenderer = ({ children }: MarkdownRendererProps) => {
+  const theme = useTheme();
   const renderers: Components = {
     h1: ({ children }) => (
       <Typography variant="h1" component={"div"}>
@@ -54,8 +55,12 @@ const MarkdownRenderer = ({ children }: MarkdownRendererProps) => {
           }
           hljs.highlightElement(element);
         }}
-        elevation={3}
-        sx={{ padding: 2, textWrap: "wrap" }}
+        elevation={0}
+        sx={{
+          padding: 2,
+          textWrap: "wrap",
+          border: `1px solid ${theme.palette.divider}`,
+        }}
       >
         {children}
       </Paper>

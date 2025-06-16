@@ -14,7 +14,7 @@ import type { ApiClient } from "@/apiClient/apiClient";
 import { HeadersInspectionOptions } from "@microsoft/kiota-http-fetchlibrary";
 
 import { useQuery } from "@tanstack/react-query";
-import { ConversationsHub } from "./ConversationsHub";
+import { useSignalRContext } from "./SignalRContext";
 
 const userId = "73728b71-c7e3-4575-a72c-977603a9ada1";
 
@@ -66,12 +66,6 @@ export const ChatProvider = ({
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
   >(null);
-  const currentConversationIdRef = useRef<string | null>(null);
-
-  // Workaround since useSignalREffect callbacks do not update when dependencies change
-  useEffect(() => {
-    currentConversationIdRef.current = currentConversationId;
-  }, [currentConversationId]);
 
   const [conversations, setConversations] = useState<ConversationInfo[]>([]);
   const currentConversation = useMemo(
@@ -110,46 +104,48 @@ export const ChatProvider = ({
     [currentConversationId]
   );
 
-  ConversationsHub.useSignalREffect(
-    "MessageStart",
+  const { useHubMethod } = useSignalRContext();
+
+  useHubMethod(
     (conversationId: string) => {
-      if (conversationId !== currentConversationIdRef.current) {
+      if (conversationId !== currentConversationId) {
         return;
       }
       setCurrentStreamingMessage("");
     },
-    []
+    [currentConversationId],
+    "MessageStart"
   );
 
-  ConversationsHub.useSignalREffect(
-    "MessageContent",
+  useHubMethod(
     (conversationId: string, _: string, partialContent: string) => {
-      if (conversationId !== currentConversationIdRef.current) {
+      if (conversationId !== currentConversationId) {
         return;
       }
       setCurrentStreamingMessage((prev) => prev + partialContent);
     },
-    []
+    [currentConversationId],
+    "MessageContent"
   );
 
-  ConversationsHub.useSignalREffect(
-    "MessageEnd",
+  useHubMethod(
     (conversationId: string, message: Message, eTag: string) => {
       addMessage(conversationId, message, eTag);
-      if (conversationId !== currentConversationIdRef.current) {
+      if (conversationId !== currentConversationId) {
         return;
       }
       setCurrentStreamingMessage(null);
     },
-    []
+    [addMessage, currentConversationId],
+    "MessageEnd"
   );
 
-  ConversationsHub.useSignalREffect(
-    "PromptReceived",
+  useHubMethod(
     (conversationId: string, message: Message, eTag: string) => {
       addMessage(conversationId, message, eTag);
     },
-    []
+    [addMessage],
+    "PromptReceived"
   );
 
   const createConversation = useCallback(

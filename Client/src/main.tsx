@@ -17,11 +17,11 @@ import reportWebVitals from "./reportWebVitals.ts";
 import { createApiClient } from "./apiClient/apiClient.ts";
 import { ChatProvider, useChatContext } from "./contexts/ChatContext.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConversationsHubProvider } from "./contexts/ConversationsHub.tsx";
+import { SignalRProvider } from "./contexts/SignalRContext.tsx";
 
 const authProvider = new AnonymousAuthenticationProvider();
 const adapter = new FetchRequestAdapter(authProvider);
-adapter.baseUrl = "https://localhost:7111";
+adapter.baseUrl = import.meta.env.VITE_API_BASE;
 const apiClient = createApiClient(adapter);
 const queryClient = new QueryClient();
 // Create a new router instance
@@ -47,12 +47,7 @@ declare module "@tanstack/react-router" {
 const App = () => {
   const chatContext = useChatContext();
   return (
-    <ConversationsHubProvider
-      automaticReconnect
-      onOpen={() => console.log("open")}
-    >
-      <RouterProvider router={router} context={{ apiClient, chatContext }} />
-    </ConversationsHubProvider>
+    <RouterProvider router={router} context={{ apiClient, chatContext }} />
   );
 };
 
@@ -63,9 +58,11 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <ChatProvider apiClient={apiClient}>
-          <App />
-        </ChatProvider>
+        <SignalRProvider>
+          <ChatProvider apiClient={apiClient}>
+            <App />
+          </ChatProvider>
+        </SignalRProvider>
       </QueryClientProvider>
     </StrictMode>
   );

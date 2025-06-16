@@ -32,6 +32,7 @@ export const MessageBox = ({ message }: MessageBoxProps) => {
           borderRadius:
             message.role === "user" ? "18px 18px 4px 18px" : undefined,
         }}
+        component={"div"}
       >
         <Typography
           variant="body1"
@@ -40,6 +41,7 @@ export const MessageBox = ({ message }: MessageBoxProps) => {
             wordBreak: "break-word",
             lineHeight: 1.6,
           }}
+          component={"div"}
         >
           <MarkdownRenderer>{message.content}</MarkdownRenderer>
         </Typography>

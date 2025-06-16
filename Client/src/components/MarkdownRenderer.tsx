@@ -48,6 +48,7 @@ const MarkdownRenderer = ({ children }: MarkdownRendererProps) => {
     link: ({ href, children }) => <Link href={href}>{children}</Link>,
     code: ({ children, className }) => (
       <Paper
+        component={"code"}
         className={className}
         ref={(element: HTMLParagraphElement) => {
           if (!element || element.hasAttribute("data-highlighted")) {

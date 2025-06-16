@@ -6,13 +6,13 @@ public static class ConversationEndpoints
 {
     public static IEndpointRouteBuilder MapConversationEndpoints(this IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("/api/users/{userId}");
+        var group = builder.MapGroup("/api/conversations").RequireAuthorization();
 
-        group.MapPost("/conversations", CreateUserConversation.Handle);
-        group.MapDelete("/conversations/{conversationId}", DeleteConversationEndpoint.Handle);
-        group.MapGet("/conversations", GetUserConversations.Handle);
-        group.MapPost("/conversations/{conversationId}/prompt", PromptConversation.Handle);
-        group.MapGet("/conversations/{conversationId}/messages", GetConversationMessages.Handle);
+        group.MapPost("/", CreateUserConversation.Handle);
+        group.MapDelete("/{conversationId}", DeleteConversationEndpoint.Handle);
+        group.MapGet("/", GetUserConversations.Handle);
+        group.MapPost("/{conversationId}/prompt", PromptConversation.Handle);
+        group.MapGet("/{conversationId}/messages", GetConversationMessages.Handle);
 
         return builder;
     }

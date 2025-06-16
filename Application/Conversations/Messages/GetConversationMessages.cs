@@ -1,5 +1,4 @@
-﻿using Core.User;
-using Domain;
+﻿using Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,10 +6,12 @@ namespace Application.Conversations.Messages;
 public static class GetConversationMessages
 {
     public async static Task<Results<Ok<IEnumerable<Message>>, NotFound, IResult>> Handle(
-        Guid userId, Guid conversationId, [FromHeader(Name = "if-none-match")] string? ifNoneMatch, HttpContext httpContext, IClusterClient clusterClient)
+        Guid conversationId,
+        [FromHeader(Name = "if-none-match")] string? ifNoneMatch,
+        HttpContext httpContext,
+        UserProvider userProvider)
     {
-        var user = clusterClient.GetGrain<IUserGrain>(userId);
-        if (user is null)
+        if (!userProvider.TryGetUser(out var user, out _))
         {
             return TypedResults.NotFound();
         }

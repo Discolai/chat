@@ -7,9 +7,13 @@ public record PromptRequest(string Prompt);
 
 public static class PromptConversation
 {
-    public static async Task<Results<Ok, NotFound>> Handle(Guid userId, Guid conversationId, PromptRequest request, IClusterClient clusterClient)
+    public static async Task<Results<Ok, NotFound>> Handle(Guid conversationId, PromptRequest request, UserProvider userProvider, IClusterClient clusterClient)
     {
-        var conversation = clusterClient.GetGrain<IConversationGrain>(conversationId, userId.ToString());
+        if (!userProvider.TryGetUserId(out var userId))
+        {
+            return TypedResults.NotFound();
+        }
+        var conversation = clusterClient.GetGrain<IConversationGrain>(conversationId, userId);
         if (conversation is null)
         {
             return TypedResults.NotFound();

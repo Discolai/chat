@@ -13,10 +13,9 @@ public class CreateUserConversationRequest
 
 public static class CreateUserConversation
 {
-    public static async Task<Results<Ok<ConversationInfo>, NotFound>> Handle(Guid userId, CreateUserConversationRequest request, IClusterClient clusterClient)
+    public static async Task<Results<Ok<ConversationInfo>, NotFound>> Handle(CreateUserConversationRequest request, IClusterClient clusterClient, UserProvider userProvider)
     {
-        var user = clusterClient.GetGrain<IUserGrain>(userId);
-        if (user is null)
+        if (!userProvider.TryGetUser(out var user, out var userId))
         {
             return TypedResults.NotFound();
         }
@@ -24,7 +23,7 @@ public static class CreateUserConversation
         if (!string.IsNullOrEmpty(request.InitialPrompt))
         {
             await clusterClient
-                .GetGrain<IConversationGrain>(conversationInfo.Id, userId.ToString())
+                .GetGrain<IConversationGrain>(conversationInfo.Id, userId)
                 .Prompt(request.InitialPrompt);
         }
         return TypedResults.Ok(conversationInfo);

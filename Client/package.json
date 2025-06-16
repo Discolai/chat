@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.32.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.2.6",
@@ -28,9 +29,11 @@
     "@tanstack/react-router-devtools": "^1.121.0",
     "@tanstack/router-plugin": "^1.121.0",
     "highlight.js": "^11.11.1",
+    "oidc-client-ts": "^3.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "react-oidc-context": "^3.3.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

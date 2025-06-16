@@ -17,9 +17,11 @@ import {
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useChatContext } from "@/contexts/ChatContext";
 import { useCallback } from "react";
+import { UserButton, useUser } from "@clerk/clerk-react";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { conversationId: currentConversationId } = useParams({
     strict: false,
   });
@@ -54,7 +56,6 @@ const Sidebar: React.FC = () => {
     },
     [currentConversationId, deleteConversation, navigate]
   );
-
   return (
     <Box
       sx={{
@@ -125,12 +126,10 @@ const Sidebar: React.FC = () => {
                   />
                   <ListItemText
                     primary={conversation.title}
-                    slotProps={{
-                      primary: {
-                        fontSize: "14px",
-                        noWrap: true,
-                        color: "white",
-                      },
+                    primaryTypographyProps={{
+                      fontSize: "14px",
+                      noWrap: true,
+                      color: "white",
                     }}
                     sx={{ flex: 1 }}
                   />
@@ -147,13 +146,53 @@ const Sidebar: React.FC = () => {
                       },
                     }}
                   >
-                    <DeleteIcon fontSize="small" />
+                    <DeleteIcon sx={{ fontSize: 16 }} />
                   </IconButton>
                 </ListItemButton>
               </ListItem>
             ))}
           </List>
         )}
+      </Box>
+
+      {/* User Profile Section */}
+      <Divider sx={{ borderColor: "#2d2d2d" }} />
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <UserButton />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "white",
+              fontSize: "14px",
+              fontWeight: 500,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {user?.firstName || user?.emailAddresses[0]?.emailAddress || "User"}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "rgba(255, 255, 255, 0.6)",
+              fontSize: "12px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {user?.emailAddresses[0]?.emailAddress}
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

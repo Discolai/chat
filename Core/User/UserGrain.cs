@@ -4,7 +4,7 @@ using Domain;
 namespace Core.User;
 
 [Alias("IUserGrain")]
-public interface IUserGrain : IGrainWithGuidKey
+public interface IUserGrain : IGrainWithStringKey
 {
     [Alias("CreateConversation")]
     Task<ConversationInfo> CreateConversation(AIModel model);
@@ -31,7 +31,7 @@ internal class UserGrain : Grain, IUserGrain
     public async Task<ConversationInfo> CreateConversation(AIModel model)
     {
         var conversationId = Guid.NewGuid();
-        var conversation = GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKey().ToString());
+        var conversation = GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKeyString());
 
         var conversationInfo = await conversation.Initialize(model);
 
@@ -55,7 +55,7 @@ internal class UserGrain : Grain, IUserGrain
         {
             return false;
         }
-        await GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKey().ToString()).Delete();
+        await GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKeyString()).Delete();
         await _conversationsStore.WriteStateAsync();
         return true;
     }
@@ -67,7 +67,7 @@ internal class UserGrain : Grain, IUserGrain
             return GetMessagesResponse.Empty;
         }
 
-        var conversation = GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKey().ToString());
+        var conversation = GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKeyString());
         return await conversation.GetMessages(ifNoneMatch);
     }
 

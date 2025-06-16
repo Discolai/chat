@@ -5,9 +5,12 @@ namespace Application.Conversations;
 
 public static class DeleteConversationEndpoint
 {
-    public static async Task<Results<Ok, NotFound>> Handle(Guid userId, Guid conversationId, IClusterClient clusterClient)
+    public static async Task<Results<Ok, NotFound>> Handle(Guid conversationId, UserProvider userProvider)
     {
-        var user = clusterClient.GetGrain<IUserGrain>(userId);
+        if (!userProvider.TryGetUser(out var user, out _))
+        {
+            return TypedResults.NotFound();
+        }
         if (!await user.DeleteConversation(conversationId))
         {
             return TypedResults.NotFound();

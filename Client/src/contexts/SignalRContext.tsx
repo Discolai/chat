@@ -11,8 +11,9 @@ import {
 import {
   HubConnectionBuilder,
   HubConnection,
-  type IHttpConnectionOptions,
+  HttpTransportType,
 } from "@microsoft/signalr";
+import { useAuth } from "@clerk/clerk-react";
 
 interface SignalRContextType {
   connection: HubConnection | null;
@@ -46,7 +47,7 @@ const createUseHubMethod = (connection: HubConnection | null) => {
   return useHubMethod;
 };
 
-interface SignalRProviderProps extends IHttpConnectionOptions {
+interface SignalRProviderProps {
   children: ReactNode;
 }
 
@@ -58,31 +59,33 @@ export const useSignalRContext = () => {
   return context;
 };
 
-export const SignalRProvider = ({
-  children,
-  ...httpConnectionOptions
-}: SignalRProviderProps) => {
+export const SignalRProvider = ({ children }: SignalRProviderProps) => {
   const connectionRef = useRef<HubConnection | null>(null);
   const [connection, setConnection] = useState<HubConnection | null>(null);
 
+  const { getToken, isSignedIn } = useAuth();
+
   useEffect(() => {
-    if (connectionRef.current) {
+    if (!isSignedIn || connectionRef.current) {
       setConnection(connectionRef.current);
       return;
     }
 
     const newConnection = new HubConnectionBuilder()
       .withAutomaticReconnect()
-      .withUrl(
-        `${import.meta.env.VITE_API_BASE}/hubs/conversations`,
-        httpConnectionOptions
-      )
+      .withUrl(`${import.meta.env.VITE_API_BASE}/hubs/conversations`, {
+        async accessTokenFactory() {
+          return (await getToken())!;
+        },
+        skipNegotiation: true,
+        transport: HttpTransportType.WebSockets,
+      })
       .build();
 
     connectionRef.current = newConnection;
     setConnection(newConnection);
     void newConnection.start();
-  }, [httpConnectionOptions]);
+  }, [getToken, isSignedIn]);
 
   const useHubMethod = useMemo(
     () => createUseHubMethod(connection),

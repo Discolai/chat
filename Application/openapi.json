@@ -5,21 +5,10 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/users/{userId}/conversations": {
+    "/api/conversations": {
       "post": {
         "tags": [
           "CreateUserConversation"
-        ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
         ],
         "requestBody": {
           "content": {
@@ -51,17 +40,6 @@
         "tags": [
           "GetUserConversations"
         ],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -82,21 +60,12 @@
         }
       }
     },
-    "/api/users/{userId}/conversations/{conversationId}": {
+    "/api/conversations/{conversationId}": {
       "delete": {
         "tags": [
           "DeleteConversationEndpoint"
         ],
         "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
           {
             "name": "conversationId",
             "in": "path",
@@ -117,21 +86,12 @@
         }
       }
     },
-    "/api/users/{userId}/conversations/{conversationId}/prompt": {
+    "/api/conversations/{conversationId}/prompt": {
       "post": {
         "tags": [
           "PromptConversation"
         ],
         "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
           {
             "name": "conversationId",
             "in": "path",
@@ -162,21 +122,12 @@
         }
       }
     },
-    "/api/users/{userId}/conversations/{conversationId}/messages": {
+    "/api/conversations/{conversationId}/messages": {
       "get": {
         "tags": [
           "GetConversationMessages"
         ],
         "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
           {
             "name": "conversationId",
             "in": "path",

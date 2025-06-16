@@ -1,5 +1,8 @@
+using Application;
 using Application.Conversations;
 using Core.Conversation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.SemanticKernel;
 using Scalar.AspNetCore;
 using System.Reflection;
@@ -44,6 +47,35 @@ if (builder.Environment.IsDevelopment())
                                  //kernelBuilder.AddOpenAIChatCompletion("openai/o4-mini", new Uri("https://models.inference.ai.azure.com"), builder.Configuration["GH_PAT"]);
 }
 
+var jwtOptions = builder.Configuration.Get<JwtOptions>() ?? throw new InvalidOperationException("Invalid jwt configuration");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(options =>
+{
+    options.MetadataAddress = jwtOptions.MetadataAddress;
+    options.Authority = jwtOptions.Authority;
+    options.Audience = jwtOptions.Audience;
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<UserProvider>();
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
@@ -52,11 +84,13 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app
-    .MapDefaultEndpoints()
-    .MapConversationEndpoints();
+app.MapDefaultEndpoints();
 
-app.MapHub<ConversationHub>("/hubs/conversations");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapConversationEndpoints();
+
+app.MapHub<ConversationHub>("/hubs/conversations").RequireAuthorization();
 
 // Configure the HTTP request pipeline.
 

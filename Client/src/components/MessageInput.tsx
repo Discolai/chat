@@ -5,8 +5,6 @@ import { useCallback, useState } from "react";
 import { Send as SendIcon } from "@mui/icons-material";
 import { useMutation } from "@tanstack/react-query";
 
-export const MessageInputMutationKey = ["MessageInput"];
-
 export const MessageInput = () => {
   const { addChatMessage, createConversation, currentConversation } =
     useChatContext();
@@ -36,7 +34,6 @@ export const MessageInput = () => {
         void addChatMessage(targetConversationId, message);
       }
     },
-    mutationKey: MessageInputMutationKey,
   });
 
   const handleKeyPress = useCallback(

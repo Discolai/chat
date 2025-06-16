@@ -3,10 +3,9 @@ import { MessageBox } from "./MessageBox";
 import { useChatContext } from "@/contexts/ChatContext";
 import { useRef, useEffect } from "react";
 import ThinkingAnimation from "./ThinkingAnimation";
-import { useMessageIsProcessing } from "@/hooks/useMessageIsProcessing";
 
 export const MessagesSection = () => {
-  const { currentConversationMessages, currentStreamingMessage } =
+  const { currentConversationMessages, currentStreamingMessage, isThinking } =
     useChatContext();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -19,7 +18,6 @@ export const MessagesSection = () => {
     scrollToBottom();
   }, [currentConversationMessages, currentStreamingMessage]);
 
-  const messageIsProcessing = useMessageIsProcessing();
   return (
     <Box
       sx={{
@@ -51,7 +49,9 @@ export const MessagesSection = () => {
           {currentConversationMessages.messages.map((message) => (
             <MessageBox key={message.id} message={message} />
           ))}
-          {messageIsProcessing ? <ThinkingAnimation /> : null}
+          {isThinking && !currentStreamingMessage ? (
+            <ThinkingAnimation />
+          ) : null}
         </Box>
       )}
       {currentStreamingMessage ? (

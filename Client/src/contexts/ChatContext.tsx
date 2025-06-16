@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSignalRContext } from "./SignalRContext";
 import { useApiClient } from "./ApiClientContext";
 import { useAuth } from "@clerk/clerk-react";
+import { redirect } from "@tanstack/react-router";
 
 interface ConversationMessages {
   messages: Message[];
@@ -27,6 +28,7 @@ export interface ChatContext {
   currentConversationMessages: ConversationMessages | null;
   currentConversation: ConversationInfo | null;
   currentStreamingMessage: string | null;
+  isThinking: boolean;
   createConversation: (initialPrompt: string | null) => Promise<string>;
   loadConversation: (id: string) => Promise<boolean>;
 
@@ -78,6 +80,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [currentConversationMessages, setCurrentConversationMessages] =
     useState<ConversationMessages | null>(null);
 
+  const [isThinking, setIsThinking] = useState(false);
+
   const addMessage = useCallback(
     (conversationId: string, message: Message, eTag: string) => {
       let messages = conversationMessages.current.get(conversationId);
@@ -107,6 +111,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       setCurrentStreamingMessage("");
+      setIsThinking(false);
     },
     [currentConversationId],
     "MessageStart"
@@ -118,6 +123,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       setCurrentStreamingMessage((prev) => prev + partialContent);
+      setIsThinking(false);
     },
     [currentConversationId],
     "MessageContent"
@@ -166,6 +172,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const createConversation = useCallback(
     async (initialPrompt: string | null | undefined) => {
+      if (initialPrompt) {
+        setIsThinking(true);
+      }
       const newConversation = await apiClient.api.conversations.post({
         model: {
           name: "some-model",
@@ -231,9 +240,25 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (currentConversation?.id === id) {
         await apiClient.api.conversations.byConversationId(id).delete();
         setCurrentConversationId(null);
+        throw redirect({ to: "/" });
       }
     },
     [apiClient.api.conversations, currentConversation?.id]
+  );
+
+  const addChatMessage = useCallback(
+    async (conversationId: string, message: string) => {
+      // Prevent flashing effect
+      setTimeout(() => {
+        setIsThinking(true);
+      }, 100);
+      await apiClient.api.conversations
+        .byConversationId(conversationId)
+        .prompt.post({
+          prompt: message,
+        });
+    },
+    [apiClient.api.conversations]
   );
 
   return (
@@ -243,15 +268,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         currentConversation,
         currentConversationMessages,
         currentStreamingMessage,
+        isThinking,
         createConversation,
-        loadConversation: loadConversation,
-        addChatMessage: async (conversationId, message) => {
-          await apiClient.api.conversations
-            .byConversationId(conversationId)
-            .prompt.post({
-              prompt: message,
-            });
-        },
+        loadConversation,
+        addChatMessage,
         deleteConversation,
       }}
     >

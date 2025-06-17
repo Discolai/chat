@@ -5,6 +5,8 @@ namespace Core.Conversation;
 
 public interface IConversationClient
 {
+    Task ConversationCreated(ConversationInfo conversationInfo);
+
     Task MessageStart(Guid conversationId);
 
     Task MessageContent(Guid conversationId, Guid messageId, string partialContent);
@@ -16,10 +18,4 @@ public interface IConversationClient
     Task MessageError(Guid conversationId, Guid promptMessageId, string eTag);
 }
 
-public class ConversationHub : Hub<IConversationClient>
-{
-    public override Task OnConnectedAsync()
-    {
-        return base.OnConnectedAsync();
-    }
-}
+public class ConversationHub : Hub<IConversationClient>;

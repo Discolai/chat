@@ -170,6 +170,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     "MessageError"
   );
 
+  const addConversation = useCallback((conversation: ConversationInfo) => {
+    setConversations((prev) => {
+      if (prev.findIndex((x) => x.id === conversation.id) !== -1) {
+        return prev;
+      }
+      return [conversation, ...prev];
+    });
+  }, []);
+
+  useHubMethod(
+    (conversation: ConversationInfo) => addConversation(conversation),
+    [addConversation],
+    "ConversationCreated"
+  );
+
   const createConversation = useCallback(
     async (initialPrompt: string | null | undefined) => {
       if (initialPrompt) {
@@ -187,10 +202,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Could not create conversation");
       }
 
-      setConversations((prev) => [newConversation, ...prev]);
+      addConversation(newConversation);
       return newConversation.id!;
     },
-    [apiClient.api.conversations]
+    [addConversation, apiClient.api.conversations]
   );
 
   const loadConversation = useCallback(

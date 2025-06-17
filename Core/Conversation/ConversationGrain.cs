@@ -86,7 +86,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         var title = "New chat";
         if (!string.IsNullOrEmpty(initialPrompt))
         {
-            title = initialPrompt.Substring(0, Math.Min(initialPrompt.Length, 30));
+            title = initialPrompt[..Math.Min(initialPrompt.Length, 30)];
         }
         if (!_infoStore.RecordExists)
         {
@@ -107,6 +107,8 @@ internal class ConversationGrain : Grain, IConversationGrain
         }
         await _infoStore.WriteStateAsync();
         await _messagesStore.WriteStateAsync();
+
+        await _conversationHub.Clients.User(_userId).ConversationCreated(_infoStore.State);
         return _infoStore.State;
     }
 

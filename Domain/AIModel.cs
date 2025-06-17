@@ -2,4 +2,4 @@
 
 [GenerateSerializer]
 [Alias("Domain.AIModel")]
-public record AIModel(string Provider, string Name, string Version);
+public record AIModel(AIModelProvider Provider, string Name, string Description);

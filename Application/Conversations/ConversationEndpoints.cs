@@ -13,6 +13,7 @@ public static class ConversationEndpoints
         group.MapGet("/", GetUserConversations.Handle);
         group.MapPost("/{conversationId}/prompt", PromptConversation.Handle);
         group.MapGet("/{conversationId}/messages", GetConversationMessages.Handle);
+        group.MapPost("/{conversationId}/model", SwitchConversationModel.Handle);
 
         return builder;
     }

@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -12,6 +13,9 @@ public interface IConversationGrain : IGrainWithGuidCompoundKey
 {
     [Alias("SetModel")]
     Task<ConversationInfo> Initialize(AIModel model, string? initialPrompt);
+
+    [Alias("SwitchModel")]
+    Task SwitchModel(AIModel model);
 
     [Alias("Delete")]
     Task Delete();
@@ -27,7 +31,7 @@ internal class ConversationGrain : Grain, IConversationGrain
 {
     private readonly IPersistentState<ConversationInfo> _infoStore;
     private readonly IPersistentState<MessagesState> _messagesStore;
-    private readonly IChatCompletionService _chatCompletionService;
+    private readonly Kernel _kernel;
     private readonly IHubContext<ConversationHub, IConversationClient> _conversationHub;
     private readonly ILogger<ConversationGrain> _logger;
     private readonly ChatHistory _chatHistory = [];
@@ -38,13 +42,13 @@ internal class ConversationGrain : Grain, IConversationGrain
     public ConversationGrain(
         [PersistentState("conversationInfo")] IPersistentState<ConversationInfo> infoState,
         [PersistentState("messages")] IPersistentState<MessagesState> messages,
-        IChatCompletionService chatCompletionService, 
+        Kernel kernel,
         IHubContext<ConversationHub, IConversationClient> conversationHub,
         ILogger<ConversationGrain> logger)
     {
         _infoStore = infoState;
         _messagesStore = messages;
-        _chatCompletionService = chatCompletionService;
+        _kernel = kernel;
         _conversationHub = conversationHub;
         _logger = logger;
     }
@@ -90,7 +94,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         }
         if (!_infoStore.RecordExists)
         {
-            _infoStore.State = new ConversationInfo { Id = this.GetPrimaryKey(), Model = model, Title = title };
+            _infoStore.State = new ConversationInfo(this.GetPrimaryKey(), model, title);
         }
         else
         {
@@ -112,6 +116,21 @@ internal class ConversationGrain : Grain, IConversationGrain
         return _infoStore.State;
     }
 
+    public async Task SwitchModel(AIModel model)
+    {
+        if (!_messagesStore.RecordExists || model.Name == _infoStore.State.Model.Name)
+        {
+            return;
+        }
+
+        _infoStore.State = _infoStore.State with
+        {
+            Model = model,
+        };
+
+        await _infoStore.WriteStateAsync();
+    }
+
     public Task Prompt(string prompt)
     {
         if (_promptTask is not null && !_promptTask.IsCompleted)
@@ -124,6 +143,7 @@ internal class ConversationGrain : Grain, IConversationGrain
 
     private async Task PerformPrompt(string prompt)
     {
+        var chatCompletionService = _kernel.Services.GetRequiredKeyedService<IChatCompletionService>(_infoStore.State.Model.Name);
         _chatHistory.AddUserMessage(prompt);
         var promptMessage = new Message
         {
@@ -146,7 +166,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         await _conversationHub.Clients.User(_userId).MessageStart(_conversationId);
         try
         {
-            await foreach (var item in _chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
+            await foreach (var item in chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
             {
                 if (item?.Content is null)
                 {

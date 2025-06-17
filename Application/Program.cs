@@ -1,5 +1,6 @@
 using Application;
 using Application.Conversations;
+using Application.Models;
 using Core.Conversation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +25,7 @@ builder.Services.AddSignalR().AddJsonProtocol(options =>
     options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
 builder.Services.AddCors();
+builder.Services.AddResponseCaching();
 
 if (!isGeneratingOpenApiDocument)
 {
@@ -38,13 +40,9 @@ builder.UseOrleans(silo =>
     }
 });
 
-var kernelBuilder = builder.Services.AddKernel();
-if (builder.Environment.IsDevelopment())
+if (!isGeneratingOpenApiDocument)
 {
-#pragma warning disable SKEXP0070 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-    kernelBuilder.AddOllamaChatCompletion("phi3", endpoint: new Uri("http://localhost:11434"));
-#pragma warning restore SKEXP0070 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-                                 //kernelBuilder.AddOpenAIChatCompletion("openai/o4-mini", new Uri("https://models.inference.ai.azure.com"), builder.Configuration["GH_PAT"]);
+    builder.AddAIModels();
 }
 
 var jwtOptions = builder.Configuration.Get<JwtOptions>() ?? throw new InvalidOperationException("Invalid jwt configuration");
@@ -88,7 +86,11 @@ app.MapDefaultEndpoints();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseResponseCaching();
+
 app.MapConversationEndpoints();
+app.MapModelsEndpoints();
 
 app.MapHub<ConversationHub>("/hubs/conversations").RequireAuthorization();
 

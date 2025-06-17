@@ -4,6 +4,8 @@
 // @ts-ignore
 import { ConversationsRequestBuilderNavigationMetadata, ConversationsRequestBuilderRequestsMetadata, type ConversationsRequestBuilder } from './conversations/index.js';
 // @ts-ignore
+import { ModelsRequestBuilderRequestsMetadata, type ModelsRequestBuilder } from './modelsRequests/index.js';
+// @ts-ignore
 import { type BaseRequestBuilder, type KeysToExcludeForNavigationMetadata, type NavigationMetadata } from '@microsoft/kiota-abstractions';
 
 /**
@@ -14,6 +16,10 @@ export interface ApiRequestBuilder extends BaseRequestBuilder<ApiRequestBuilder>
      * The conversations property
      */
     get conversations(): ConversationsRequestBuilder;
+    /**
+     * The models property
+     */
+    get models(): ModelsRequestBuilder;
 }
 /**
  * Uri template for the request builder.
@@ -26,6 +32,9 @@ export const ApiRequestBuilderNavigationMetadata: Record<Exclude<keyof ApiReques
     conversations: {
         requestsMetadata: ConversationsRequestBuilderRequestsMetadata,
         navigationMetadata: ConversationsRequestBuilderNavigationMetadata,
+    },
+    models: {
+        requestsMetadata: ModelsRequestBuilderRequestsMetadata,
     },
 };
 /* tslint:enable */

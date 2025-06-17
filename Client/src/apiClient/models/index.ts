@@ -6,18 +6,19 @@ import { type Guid, type Parsable, type ParseNode, type SerializationWriter } fr
 
 export interface AIModel extends Parsable {
     /**
+     * The description property
+     */
+    description?: string | null;
+    /**
      * The name property
      */
     name?: string | null;
     /**
      * The provider property
      */
-    provider?: string | null;
-    /**
-     * The version property
-     */
-    version?: string | null;
+    provider?: AIModelProvider | null;
 }
+export type AIModelProvider = (typeof AIModelProviderObject)[keyof typeof AIModelProviderObject];
 export interface ConversationInfo extends Parsable {
     /**
      * The id property
@@ -77,6 +78,15 @@ export function createMessageFromDiscriminatorValue(parseNode: ParseNode | undef
 export function createPromptRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
     return deserializeIntoPromptRequest;
 }
+/**
+ * Creates a new instance of the appropriate class based on discriminator value
+ * @param parseNode The parse node to use to read the discriminator value and create the object
+ * @returns {SwitchConversationModelRequest}
+ */
+// @ts-ignore
+export function createSwitchConversationModelRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoSwitchConversationModelRequest;
+}
 export interface CreateUserConversationRequest extends Parsable {
     /**
      * The initialPrompt property
@@ -85,7 +95,7 @@ export interface CreateUserConversationRequest extends Parsable {
     /**
      * The model property
      */
-    model?: AIModel | null;
+    model?: string | null;
 }
 /**
  * The deserialization information for the current model
@@ -94,9 +104,9 @@ export interface CreateUserConversationRequest extends Parsable {
 // @ts-ignore
 export function deserializeIntoAIModel(aIModel: Partial<AIModel> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
+        "description": n => { aIModel.description = n.getStringValue(); },
         "name": n => { aIModel.name = n.getStringValue(); },
-        "provider": n => { aIModel.provider = n.getStringValue(); },
-        "version": n => { aIModel.version = n.getStringValue(); },
+        "provider": n => { aIModel.provider = n.getEnumValue<AIModelProvider>(AIModelProviderObject); },
     }
 }
 /**
@@ -119,7 +129,7 @@ export function deserializeIntoConversationInfo(conversationInfo: Partial<Conver
 export function deserializeIntoCreateUserConversationRequest(createUserConversationRequest: Partial<CreateUserConversationRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
         "initialPrompt": n => { createUserConversationRequest.initialPrompt = n.getStringValue(); },
-        "model": n => { createUserConversationRequest.model = n.getObjectValue<AIModel>(createAIModelFromDiscriminatorValue); },
+        "model": n => { createUserConversationRequest.model = n.getStringValue(); },
     }
 }
 /**
@@ -143,6 +153,16 @@ export function deserializeIntoMessage(message: Partial<Message> | undefined = {
 export function deserializeIntoPromptRequest(promptRequest: Partial<PromptRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
         "prompt": n => { promptRequest.prompt = n.getStringValue(); },
+    }
+}
+/**
+ * The deserialization information for the current model
+ * @returns {Record<string, (node: ParseNode) => void>}
+ */
+// @ts-ignore
+export function deserializeIntoSwitchConversationModelRequest(switchConversationModelRequest: Partial<SwitchConversationModelRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+    return {
+        "model": n => { switchConversationModelRequest.model = n.getStringValue(); },
     }
 }
 export interface Message extends Parsable {
@@ -177,9 +197,9 @@ export interface PromptRequest extends Parsable {
 // @ts-ignore
 export function serializeAIModel(writer: SerializationWriter, aIModel: Partial<AIModel> | undefined | null = {}) : void {
     if (aIModel) {
+        writer.writeStringValue("description", aIModel.description);
         writer.writeStringValue("name", aIModel.name);
-        writer.writeStringValue("provider", aIModel.provider);
-        writer.writeStringValue("version", aIModel.version);
+        writer.writeEnumValue<AIModelProvider>("provider", aIModel.provider);
     }
 }
 /**
@@ -202,7 +222,7 @@ export function serializeConversationInfo(writer: SerializationWriter, conversat
 export function serializeCreateUserConversationRequest(writer: SerializationWriter, createUserConversationRequest: Partial<CreateUserConversationRequest> | undefined | null = {}) : void {
     if (createUserConversationRequest) {
         writer.writeStringValue("initialPrompt", createUserConversationRequest.initialPrompt);
-        writer.writeObjectValue<AIModel>("model", createUserConversationRequest.model, serializeAIModel);
+        writer.writeStringValue("model", createUserConversationRequest.model);
     }
 }
 /**
@@ -228,6 +248,26 @@ export function serializePromptRequest(writer: SerializationWriter, promptReques
         writer.writeStringValue("prompt", promptRequest.prompt);
     }
 }
+/**
+ * Serializes information the current object
+ * @param writer Serialization writer to use to serialize this model
+ */
+// @ts-ignore
+export function serializeSwitchConversationModelRequest(writer: SerializationWriter, switchConversationModelRequest: Partial<SwitchConversationModelRequest> | undefined | null = {}) : void {
+    if (switchConversationModelRequest) {
+        writer.writeStringValue("model", switchConversationModelRequest.model);
+    }
+}
+export interface SwitchConversationModelRequest extends Parsable {
+    /**
+     * The model property
+     */
+    model?: string | null;
+}
+export const AIModelProviderObject = {
+    Ollama: "ollama",
+    OpenAi: "openAi",
+} as const;
 export const MessageRoleObject = {
     User: "user",
     Assistant: "assistant",

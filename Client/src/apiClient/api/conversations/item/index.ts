@@ -4,6 +4,8 @@
 // @ts-ignore
 import { MessagesRequestBuilderRequestsMetadata, type MessagesRequestBuilder } from './messages/index.js';
 // @ts-ignore
+import { ModelRequestBuilderRequestsMetadata, type ModelRequestBuilder } from './model/index.js';
+// @ts-ignore
 import { PromptRequestBuilderRequestsMetadata, type PromptRequestBuilder } from './prompt/index.js';
 // @ts-ignore
 import { type BaseRequestBuilder, type KeysToExcludeForNavigationMetadata, type NavigationMetadata, type Parsable, type ParsableFactory, type RequestConfiguration, type RequestInformation, type RequestsMetadata } from '@microsoft/kiota-abstractions';
@@ -16,6 +18,10 @@ export interface WithConversationItemRequestBuilder extends BaseRequestBuilder<W
      * The messages property
      */
     get messages(): MessagesRequestBuilder;
+    /**
+     * The model property
+     */
+    get model(): ModelRequestBuilder;
     /**
      * The prompt property
      */
@@ -41,6 +47,9 @@ export const WithConversationItemRequestBuilderUriTemplate = "{+baseurl}/api/con
 export const WithConversationItemRequestBuilderNavigationMetadata: Record<Exclude<keyof WithConversationItemRequestBuilder, KeysToExcludeForNavigationMetadata>, NavigationMetadata> = {
     messages: {
         requestsMetadata: MessagesRequestBuilderRequestsMetadata,
+    },
+    model: {
+        requestsMetadata: ModelRequestBuilderRequestsMetadata,
     },
     prompt: {
         requestsMetadata: PromptRequestBuilderRequestsMetadata,

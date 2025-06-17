@@ -17,6 +17,9 @@ public interface IUserGrain : IGrainWithStringKey
 
     [Alias("GetConversationMessages")]
     ValueTask<GetMessagesResponse> GetConversationMessages(Guid conversationId, string? ifNoneMatch);
+
+    [Alias("SwitchModel")]
+    ValueTask SwitchModel(Guid conversationId, AIModel model);
 }
 
 internal class UserGrain : Grain, IUserGrain
@@ -62,7 +65,7 @@ internal class UserGrain : Grain, IUserGrain
 
     public async ValueTask<GetMessagesResponse> GetConversationMessages(Guid conversationId, string? ifNoneMatch)
     {
-        if (!_conversationsStore.RecordExists || !_conversationsStore.State.Conversations.Any(x => x.Id == conversationId))
+        if (!HasConversation(conversationId))
         {
             return GetMessagesResponse.Empty;
         }
@@ -72,6 +75,18 @@ internal class UserGrain : Grain, IUserGrain
     }
 
     public ValueTask<List<ConversationInfo>> GetConversations() => ValueTask.FromResult(_conversationsStore.State.Conversations);
+
+    public async ValueTask SwitchModel(Guid conversationId, AIModel model)
+    {
+        if (!HasConversation(conversationId))
+        {
+            return;
+        }
+
+        await GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKeyString()).SwitchModel(model);
+    }
+
+    private bool HasConversation(Guid conversationId) => _conversationsStore.RecordExists && _conversationsStore.State.Conversations.Any(x => x.Id == conversationId);
 }
 
 [GenerateSerializer]

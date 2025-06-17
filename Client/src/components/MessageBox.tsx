@@ -8,6 +8,9 @@ interface MessageBoxProps {
 
 export const MessageBox = ({ message }: MessageBoxProps) => {
   const theme = useTheme();
+  if (!message.content) {
+    return;
+  }
   return (
     <Box
       sx={{

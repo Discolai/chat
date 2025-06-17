@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { MessageBox } from "./MessageBox";
 import { useChatContext } from "@/contexts/ChatContext";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 import ThinkingAnimation from "./ThinkingAnimation";
 
 export const MessagesSection = () => {
@@ -10,13 +10,36 @@ export const MessagesSection = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [currentConversationMessages, currentStreamingMessage]);
+  }, [currentConversationMessages, currentStreamingMessage, scrollToBottom]);
+
+  const shouldRenderThinkingAnimation = useMemo(() => {
+    if (isThinking && !currentStreamingMessage) {
+      return true;
+    }
+    if (
+      currentStreamingMessage ||
+      !currentConversationMessages?.messages ||
+      currentConversationMessages.messages.length === 0
+    ) {
+      return false;
+    }
+
+    const lastMessage =
+      currentConversationMessages.messages[
+        currentConversationMessages.messages.length - 1
+      ];
+    return lastMessage.role === "user";
+  }, [
+    currentConversationMessages?.messages,
+    currentStreamingMessage,
+    isThinking,
+  ]);
 
   return (
     <Box
@@ -49,12 +72,10 @@ export const MessagesSection = () => {
           {currentConversationMessages.messages.map((message) => (
             <MessageBox key={message.id} message={message} />
           ))}
-          {isThinking && !currentStreamingMessage ? (
-            <ThinkingAnimation />
-          ) : null}
+          {shouldRenderThinkingAnimation ? <ThinkingAnimation /> : null}
         </Box>
       )}
-      {currentStreamingMessage ? (
+      {currentStreamingMessage != null ? (
         <Box sx={{ maxWidth: "800px", mx: "auto", width: "100%" }}>
           <MessageBox
             message={{

@@ -2,24 +2,35 @@
 using Core.User;
 using Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Options;
 
 namespace Application.Conversations;
 
 public class CreateUserConversationRequest
 {
-    public required AIModel Model { get; set; }
+    public required string Model { get; set; }
     public string? InitialPrompt { get; set; }
 }
 
 public static class CreateUserConversation
 {
-    public static async Task<Results<Ok<ConversationInfo>, NotFound>> Handle(CreateUserConversationRequest request, IClusterClient clusterClient, UserProvider userProvider)
+    public static async Task<Results<Ok<ConversationInfo>, NotFound, BadRequest>> Handle(
+        CreateUserConversationRequest request,
+        IClusterClient clusterClient,
+        UserProvider userProvider,
+        IOptions<AIModelConfiguration> aIModelConfiguration)
     {
         if (!userProvider.TryGetUser(out var user, out var userId))
         {
             return TypedResults.NotFound();
         }
-        var conversationInfo = await user.CreateConversation(request.Model, request.InitialPrompt);
+        var model = aIModelConfiguration.Value.Models.FirstOrDefault(x => x.Name == request.Model);
+        if (model is null)
+        {
+            return TypedResults.BadRequest();
+        }
+
+        var conversationInfo = await user.CreateConversation(model.ToAIModel(), request.InitialPrompt);
         if (!string.IsNullOrEmpty(request.InitialPrompt))
         {
             await clusterClient

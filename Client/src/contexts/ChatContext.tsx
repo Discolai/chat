@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 // import { ConversationsHub } from "./ConversationsHub";
-import type { ConversationInfo, Message } from "@/apiClient/models";
+import type { AIModel, ConversationInfo, Message } from "@/apiClient/models";
 import { HeadersInspectionOptions } from "@microsoft/kiota-http-fetchlibrary";
 
 import { useQuery } from "@tanstack/react-query";
@@ -28,12 +28,17 @@ export interface ChatContext {
   currentConversationMessages: ConversationMessages | null;
   currentConversation: ConversationInfo | null;
   currentStreamingMessage: string | null;
+  availableModels: AIModel[] | null;
   isThinking: boolean;
-  createConversation: (initialPrompt: string | null) => Promise<string>;
+  createConversation: (
+    model: AIModel | null | undefined,
+    initialPrompt: string | null | undefined
+  ) => Promise<string>;
   loadConversation: (id: string) => Promise<boolean>;
 
   addChatMessage: (conversationId: string, message: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
+  switchModel: (conversationId: string, newModelName: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContext | undefined>(undefined);
@@ -52,6 +57,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { data: conversationsResponse } = useQuery({
     queryKey: ["conversations"],
     queryFn: () => apiClient.api.conversations.get(),
+    enabled: isSignedIn,
+  });
+
+  const { data: availableModels } = useQuery({
+    queryKey: ["models"],
+    queryFn: () => apiClient.api.models.get(),
     enabled: isSignedIn,
   });
 
@@ -186,16 +197,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const createConversation = useCallback(
-    async (initialPrompt: string | null | undefined) => {
+    async (
+      model: AIModel | null | undefined,
+      initialPrompt: string | null | undefined
+    ) => {
       if (initialPrompt) {
         setIsThinking(true);
       }
       const newConversation = await apiClient.api.conversations.post({
-        model: {
-          name: "some-model",
-          provider: "some-provider",
-          version: "1",
-        },
+        model: model?.name ?? availableModels![0].name,
         initialPrompt: initialPrompt,
       });
       if (!newConversation) {
@@ -205,7 +215,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       addConversation(newConversation);
       return newConversation.id!;
     },
-    [addConversation, apiClient.api.conversations]
+    [addConversation, apiClient.api.conversations, availableModels]
   );
 
   const loadConversation = useCallback(
@@ -276,6 +286,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     [apiClient.api.conversations]
   );
 
+  const switchModel = useCallback(
+    async (conversationId: string, newModelName: string) => {
+      const newModel = availableModels?.find((x) => x.name === newModelName);
+      if (!newModel) {
+        throw new Error("Could not find model");
+      }
+
+      await apiClient.api.conversations
+        .byConversationId(conversationId)
+        .model.post({ model: newModelName });
+    },
+    [apiClient.api.conversations, availableModels]
+  );
+
   return (
     <ChatContext.Provider
       value={{
@@ -284,6 +308,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         currentConversationMessages,
         currentStreamingMessage,
         isThinking,
+        availableModels: availableModels ?? null,
+        switchModel,
         createConversation,
         loadConversation,
         addChatMessage,

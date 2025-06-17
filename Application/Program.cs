@@ -5,13 +5,19 @@ using Core.Conversation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.SemanticKernel;
+using Orleans.Clustering.Redis;
+using Orleans.Configuration;
+using Orleans.Hosting;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using TauriMind.ServiceDefaults;
 
 var isGeneratingOpenApiDocument = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
+
+IServiceProvider? serviceProvider = null;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt => opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
@@ -30,13 +36,41 @@ builder.Services.AddResponseCaching();
 if (!isGeneratingOpenApiDocument)
 {
     builder.AddServiceDefaults();
+    builder.AddRedisClient(connectionName: "redis");
 }
+
 builder.UseOrleans(silo =>
 {
-    if (isGeneratingOpenApiDocument || builder.Environment.IsDevelopment())
+    if (isGeneratingOpenApiDocument)
     {
         silo.AddMemoryGrainStorageAsDefault();
         silo.UseLocalhostClustering();
+    }
+    else
+    {
+        silo.Configure<ClusterOptions>(opts =>
+        {
+            opts.ClusterId = System.Environment.MachineName;
+            opts.ServiceId = "TauriMind";
+        });
+
+        var createMultiplexer = () => Task.FromResult(serviceProvider?.GetRequiredService<IConnectionMultiplexer>()!);
+        silo.AddRedisGrainStorageAsDefault(options =>
+        {
+            options.ConfigurationOptions = new();
+            options.CreateMultiplexer = _ => createMultiplexer();
+        });
+        silo.UseRedisClustering(options =>
+        {
+            options.ConfigurationOptions = new();
+            options.CreateMultiplexer = _ => createMultiplexer();
+        });
+        silo.UseRedisGrainDirectoryAsDefault(options =>
+        {
+            options.ConfigurationOptions = new();
+            options.CreateMultiplexer = _ => createMultiplexer();
+        });
+        silo.ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000);
     }
 });
 
@@ -97,5 +131,7 @@ app.MapHub<ConversationHub>("/hubs/conversations").RequireAuthorization();
 // Configure the HTTP request pipeline.
 
 app.UseHttpsRedirection();
+
+serviceProvider = app.Services;
 
 app.Run();

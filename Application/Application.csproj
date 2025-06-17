@@ -19,12 +19,16 @@
 
 
 	<ItemGroup>
+		<PackageReference Include="Aspire.StackExchange.Redis" Version="9.3.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.6" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
 		<PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="9.0.6">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.Orleans.Clustering.Redis" Version="9.1.2" />
+		<PackageReference Include="Microsoft.Orleans.GrainDirectory.Redis" Version="9.1.2" />
+		<PackageReference Include="Microsoft.Orleans.Persistence.Redis" Version="9.1.2" />
 		<PackageReference Include="Microsoft.Orleans.Server" Version="9.1.2" />
 		<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.56.0-alpha" />
 		<PackageReference Include="Scalar.AspNetCore" Version="2.4.13" />

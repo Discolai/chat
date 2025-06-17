@@ -151,7 +151,7 @@ const Sidebar: React.FC = () => {
         )}
       </Box>
 
-      <Divider sx={{ borderColor: "#2d2d2d" }} />
+      <Divider />
       <Box
         sx={{
           p: 2,

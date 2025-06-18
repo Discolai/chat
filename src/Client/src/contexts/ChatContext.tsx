@@ -297,6 +297,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       await apiClient.api.conversations
         .byConversationId(conversationId)
         .model.post({ model: newModelName });
+
+      setConversations((prev) => {
+        return prev.map((conv) => {
+          if (conv.id === conversationId) {
+            return { ...conv, model: newModel };
+          }
+          return conv;
+        });
+      });
     },
     [apiClient.api.conversations, availableModels]
   );

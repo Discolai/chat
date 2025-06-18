@@ -1,4 +1,6 @@
-FROM node:18 as build-frontend
+ARG TARGETPLATFORM
+
+FROM --platform=${TARGETPLATFORM} node:18 as build-frontend
 
 WORKDIR /app
 
@@ -12,7 +14,7 @@ COPY ./src/Client .
 
 RUN pnpm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-backend
+FROM --platform=${TARGETPLATFORM} mcr.microsoft.com/dotnet/sdk:9.0 AS build-backend
 WORKDIR /app
 
 COPY ./src ./
@@ -23,7 +25,7 @@ COPY --from=build-frontend /app/dist Application/wwwroot
 RUN dotnet restore
 RUN dotnet publish -c Release -o out
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+FROM --platform=${TARGETPLATFORM} mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build-backend /app/out .
 

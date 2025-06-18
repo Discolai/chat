@@ -200,6 +200,11 @@ internal class ConversationGrain : Grain, IConversationGrain
         await _messagesStore.WriteStateAsync(cts.Token);
 
         await _conversationHub.Clients.User(_userId).MessageEnd(_conversationId, responseMessage, _messagesStore.Etag);
+
+        if (_promptCts == cts)
+        {
+            _promptCts = null;
+        }
     }
 
     public async Task Delete()

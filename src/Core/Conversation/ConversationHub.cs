@@ -7,6 +7,8 @@ public interface IConversationClient
 {
     Task ConversationCreated(ConversationInfo conversationInfo);
 
+    Task ConversationDeleted(Guid conversationId);
+
     Task MessageStart(Guid conversationId);
 
     Task MessageContent(Guid conversationId, Guid messageId, string partialContent);

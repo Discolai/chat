@@ -49,7 +49,7 @@ internal class UserGrain : Grain, IUserGrain
 
     public async Task<bool> DeleteConversation(Guid conversationId)
     {
-        if (_conversationsStore.RecordExists)
+        if (!_conversationsStore.RecordExists)
         {
             return false;
         }
@@ -58,7 +58,9 @@ internal class UserGrain : Grain, IUserGrain
         {
             return false;
         }
+
         await GrainFactory.GetGrain<IConversationGrain>(conversationId, this.GetPrimaryKeyString()).Delete();
+        _conversationsStore.State.Conversations.Remove(conversationInfo);
         await _conversationsStore.WriteStateAsync();
         return true;
     }

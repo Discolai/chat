@@ -16,7 +16,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useSignalRContext } from "./SignalRContext";
 import { useApiClient } from "./ApiClientContext";
 import { useAuth } from "@clerk/clerk-react";
-import { redirect } from "@tanstack/react-router";
 
 interface ConversationMessages {
   messages: Message[];
@@ -254,6 +253,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setCurrentConversationMessages(messages ?? null);
       }
+      setCurrentStreamingMessage("");
       return true;
     },
     [apiClient.api.conversations, isSignedIn]
@@ -261,12 +261,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteConversation = useCallback(
     async (id: string) => {
-      setConversations((prev) => prev.filter((c) => c.id !== id));
+      await apiClient.api.conversations.byConversationId(id).delete();
       if (currentConversation?.id === id) {
-        await apiClient.api.conversations.byConversationId(id).delete();
         setCurrentConversationId(null);
-        throw redirect({ to: "/" });
+        setCurrentConversationMessages(null);
+        setCurrentStreamingMessage("");
       }
+      setConversations((prev) => prev.filter((c) => c.id !== id));
     },
     [apiClient.api.conversations, currentConversation?.id]
   );

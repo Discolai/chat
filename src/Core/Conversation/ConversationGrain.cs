@@ -137,12 +137,17 @@ internal class ConversationGrain : Grain, IConversationGrain
         {
             throw new InvalidOperationException("Another prompt is active");
         }
-        _promptTask = PerformPrompt(prompt);
+        _promptCts = new CancellationTokenSource();
+        _promptTask = PerformPrompt(prompt, _promptCts);
         return Task.CompletedTask;
     }
 
-    private async Task PerformPrompt(string prompt)
+    private CancellationTokenSource? _promptCts;
+
+    private async Task PerformPrompt(string prompt, CancellationTokenSource cts)
     {
+        using var _ = cts;
+
         var chatCompletionService = _kernel.Services.GetRequiredKeyedService<IChatCompletionService>(_infoStore.State.Model.Name);
         _chatHistory.AddUserMessage(prompt);
         var promptMessage = new Message
@@ -152,7 +157,7 @@ internal class ConversationGrain : Grain, IConversationGrain
             Content = prompt
         };
         _messagesStore.State.Messages.Add(promptMessage);
-        await _messagesStore.WriteStateAsync();
+        await _messagesStore.WriteStateAsync(cts.Token);
         await _conversationHub.Clients.User(_userId).PromptReceived(_conversationId, promptMessage, _messagesStore.Etag);
 
         var responseMessage = new Message
@@ -166,7 +171,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         await _conversationHub.Clients.User(_userId).MessageStart(_conversationId);
         try
         {
-            await foreach (var item in chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory))
+            await foreach (var item in chatCompletionService.GetStreamingChatMessageContentsAsync(_chatHistory, cancellationToken: cts.Token))
             {
                 if (item?.Content is null)
                 {
@@ -176,25 +181,30 @@ internal class ConversationGrain : Grain, IConversationGrain
                 await _conversationHub.Clients.User(_userId).MessageContent(_conversationId, responseMessage.Id, item.Content);
             }
         }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
         catch (Exception e)
         {
             _logger.LogError(e, "Error producing chat response.");
 
             promptMessage.HasError = true;
-            await _messagesStore.WriteStateAsync();
+            await _messagesStore.WriteStateAsync(cts.Token);
             await _conversationHub.Clients.User(_userId).MessageError(_conversationId, promptMessage.Id, _messagesStore.Etag);
             return;
         }
         responseMessage.Content = contentBuilder.ToString();
         _chatHistory.AddAssistantMessage(responseMessage.Content);
         _messagesStore.State.Messages.Add(responseMessage);
-        await _messagesStore.WriteStateAsync();
+        await _messagesStore.WriteStateAsync(cts.Token);
 
         await _conversationHub.Clients.User(_userId).MessageEnd(_conversationId, responseMessage, _messagesStore.Etag);
     }
 
     public async Task Delete()
     {
+        _promptCts?.Cancel();
         if (_infoStore.RecordExists)
         {
             await _infoStore.ClearStateAsync();
@@ -203,6 +213,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         {
             await _messagesStore.ClearStateAsync();
         }
+        await _conversationHub.Clients.User(_userId).ConversationDeleted(_conversationId);
 
         DeactivateOnIdle();
     }

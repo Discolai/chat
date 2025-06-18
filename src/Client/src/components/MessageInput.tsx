@@ -89,7 +89,10 @@ export const MessageInput = () => {
         placeholder="Write a message..."
         variant="standard"
       />
-      <Box display="flex" justifyContent="space-between">
+      <Box
+        display="flex"
+        justifyContent={availableModels ? "space-between" : "end"}
+      >
         {availableModels ? (
           <Select
             value={selectedModel?.name ?? ""}
@@ -112,7 +115,7 @@ export const MessageInput = () => {
           loading={sendMutation.isPending}
           variant="contained"
           color="primary"
-          sx={{ minWidth: "unset", justifySelf: "flex-end" }}
+          sx={{ minWidth: "unset" }}
         >
           <NorthIcon />
         </Button>

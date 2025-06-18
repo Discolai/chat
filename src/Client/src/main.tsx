@@ -14,9 +14,7 @@ import { routeTree } from "./routeTree.gen";
 import reportWebVitals from "./reportWebVitals.ts";
 // import { ConversationsHubProvider } from "./contexts/ConversationsHub.tsx";
 import { ChatProvider, useChatContext } from "./contexts/ChatContext.tsx";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SignalRProvider } from "./contexts/SignalRContext.tsx";
 import { ClerkProvider } from "@clerk/clerk-react";
 import {
@@ -27,16 +25,7 @@ import { ThemeProvider } from "@mui/material";
 import { useClerkAppereance } from "./hooks/useClerkAppereance.ts";
 import { theme } from "./theme.ts";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      gcTime: 1 * 60 * 60,
-    },
-  },
-});
-const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-});
+const queryClient = new QueryClient();
 
 // Create a new router instance
 const router = createRouter({
@@ -74,14 +63,11 @@ const App = () => {
     >
       <SignalRProvider>
         <ApiClientProvider>
-          <PersistQueryClientProvider
-            client={queryClient}
-            persistOptions={{ persister }}
-          >
+          <QueryClientProvider client={queryClient}>
             <ChatProvider>
               <RouterEntry />
             </ChatProvider>
-          </PersistQueryClientProvider>
+          </QueryClientProvider>
         </ApiClientProvider>
       </SignalRProvider>
     </ClerkProvider>

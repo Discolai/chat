@@ -109,6 +109,13 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserProvider>();
 
 var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseStaticFiles();
+    app.MapFallbackToFile("/index.html");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

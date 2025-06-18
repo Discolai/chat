@@ -47,7 +47,11 @@ export const ApiClientProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const adapter = new FetchRequestAdapter(authProvider);
-    adapter.baseUrl = import.meta.env.VITE_API_BASE;
+    if (import.meta.env.DEV) {
+      adapter.baseUrl = import.meta.env.VITE_API_BASE;
+    } else {
+      adapter.baseUrl = window.location.origin;
+    }
 
     return createApiClient(adapter);
   }, [getToken, isSignedIn]);

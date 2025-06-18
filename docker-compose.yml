@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - ConnectionStrings__redis=redis:6379,password=your_redis_password
+    depends_on:
+      - redis
+    ports:
+      - "8080:8080"
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--requirepass", "your_redis_password"]
+    ports:
+      - "6969:6379"
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "7070:8001"
+    depends_on:
+      - redis

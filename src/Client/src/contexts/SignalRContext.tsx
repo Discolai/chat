@@ -71,9 +71,16 @@ export const SignalRProvider = ({ children }: SignalRProviderProps) => {
       return;
     }
 
+    let url = "/hubs/conversations";
+    if (import.meta.env.DEV) {
+      url = import.meta.env.VITE_API_BASE + url;
+    } else {
+      url = window.location.origin + url;
+    }
+
     const newConnection = new HubConnectionBuilder()
       .withAutomaticReconnect()
-      .withUrl(`${import.meta.env.VITE_API_BASE}/hubs/conversations`, {
+      .withUrl(url, {
         async accessTokenFactory() {
           return (await getToken())!;
         },

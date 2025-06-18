@@ -30,7 +30,7 @@ const Sidebar: React.FC = () => {
     useChatContext();
 
   const handleNewChat = useCallback(async () => {
-    const newId = await createConversation(null);
+    const newId = await createConversation(null, null);
     await navigate({
       to: "/conversation/$conversationId",
       params: { conversationId: newId },

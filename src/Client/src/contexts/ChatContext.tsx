@@ -195,6 +195,29 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     "ConversationCreated"
   );
 
+  useHubMethod(
+    (conversationId: string) => {
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      if (currentConversationId === conversationId) {
+        setCurrentConversationId(null);
+        setCurrentConversationMessages(null);
+        setCurrentStreamingMessage("");
+      }
+    },
+    [currentConversationId],
+    "ConversationDeleted"
+  );
+
+  useHubMethod(
+    (conversation: ConversationInfo) => {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversation.id ? conversation : c))
+      );
+    },
+    [],
+    "ConversationInfoUpdated"
+  );
+
   const createConversation = useCallback(
     async (
       model: AIModel | null | undefined,

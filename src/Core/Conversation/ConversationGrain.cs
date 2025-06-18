@@ -129,6 +129,7 @@ internal class ConversationGrain : Grain, IConversationGrain
         };
 
         await _infoStore.WriteStateAsync();
+        await _conversationHub.Clients.User(_userId).ConversationInfoUpdated(_infoStore.State);
     }
 
     public Task Prompt(string prompt)

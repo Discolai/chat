@@ -3,11 +3,7 @@ using Application.Conversations;
 using Application.Models;
 using Core.Conversation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.SemanticKernel;
-using Orleans.Clustering.Redis;
 using Orleans.Configuration;
-using Orleans.Hosting;
 using Scalar.AspNetCore;
 using ServiceDefaults;
 using StackExchange.Redis;
@@ -25,11 +21,15 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt => op
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddSignalR().AddJsonProtocol(options =>
+var signalRBuilder = builder.Services.AddSignalR().AddJsonProtocol(options =>
 {
     options.PayloadSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
     options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
+if (!isGeneratingOpenApiDocument)
+{
+    signalRBuilder.AddStackExchangeRedis(builder.Configuration.GetConnectionString("redis")!);
+}
 builder.Services.AddCors();
 builder.Services.AddResponseCaching();
 

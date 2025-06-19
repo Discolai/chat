@@ -23,9 +23,6 @@ importers:
       '@microsoft/kiota-abstractions':
         specifier: 1.0.0-preview.95
         version: 1.0.0-preview.95
-      '@microsoft/kiota-bundle':
-        specifier: 1.0.0-preview.95
-        version: 1.0.0-preview.95
       '@microsoft/kiota-http-fetchlibrary':
         specifier: 1.0.0-preview.95
         version: 1.0.0-preview.95
@@ -50,15 +47,9 @@ importers:
       '@mui/material':
         specifier: ^7.1.1
         version: 7.1.1(@emotion/react@11.14.0(@types/react@19.1.8)(react@19.1.0))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.8)(react@19.1.0))(@types/react@19.1.8)(react@19.1.0))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      '@tanstack/query-sync-storage-persister':
-        specifier: ^5.80.7
-        version: 5.80.7
       '@tanstack/react-query':
         specifier: ^5.80.7
         version: 5.80.7(react@19.1.0)
-      '@tanstack/react-query-persist-client':
-        specifier: ^5.80.7
-        version: 5.80.7(@tanstack/react-query@5.80.7(react@19.1.0))(react@19.1.0)
       '@tanstack/react-router':
         specifier: ^1.121.0
         version: 1.121.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -71,9 +62,6 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
-      oidc-client-ts:
-        specifier: ^3.3.0
-        version: 3.3.0
       react:
         specifier: ^19.0.0
         version: 19.1.0
@@ -83,9 +71,6 @@ importers:
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.1.8)(react@19.1.0)
-      react-oidc-context:
-        specifier: ^3.3.0
-        version: 3.3.0(oidc-client-ts@3.3.0)(react@19.1.0)
     devDependencies:
       '@testing-library/dom':
         specifier: ^10.4.0
@@ -644,9 +629,6 @@ packages:
   '@microsoft/kiota-abstractions@1.0.0-preview.95':
     resolution: {integrity: sha512-ditQ6EOUlSEmCFIRkO2+/JDXKFJrhfZvUuXRW01cQPsj+a7QB0aIhZXF9fHy7p26idOGqWmImAn7zGB3FBRUug==}
 
-  '@microsoft/kiota-bundle@1.0.0-preview.95':
-    resolution: {integrity: sha512-4JB3mnTKGq7y5hevGCfzoAzpEhXBggVzAiUMS5GMxwFz+gkG9PFCKPeXZwM8FG8PTFObtmjh7EvkpkjKBmxbaw==}
-
   '@microsoft/kiota-http-fetchlibrary@1.0.0-preview.95':
     resolution: {integrity: sha512-24OFn34CFDbnjumBHrx1c73WJaBNYU3ZqhtOiZ68tbVfNsnHnNB+w28amghDnCKTGt2Je6JmHhTj0xMr+0LYbQ==}
 
@@ -893,18 +875,6 @@ packages:
 
   '@tanstack/query-core@5.80.7':
     resolution: {integrity: sha512-s09l5zeUKC8q7DCCCIkVSns8zZrK4ZDT6ryEjxNBFi68G4z2EBobBS7rdOY3r6W1WbUDpc1fe5oY+YO/+2UVUg==}
-
-  '@tanstack/query-persist-client-core@5.80.7':
-    resolution: {integrity: sha512-/V+zw5cGseMzzI9SfI5eem+826gMhnouMi0X7Da41dVC96xNvdyed+FHtIKaSXyCm4YpcPUtyA5eHG4Ng7yU8g==}
-
-  '@tanstack/query-sync-storage-persister@5.80.7':
-    resolution: {integrity: sha512-lIoEkYQsasWmj/ftuH4ntBlEwsetAf1AQ/8kMCVvBH9ERIL9sM5gaopV5ja0KzVUISzqnUVlUnK9VqSL73uzYw==}
-
-  '@tanstack/react-query-persist-client@5.80.7':
-    resolution: {integrity: sha512-ZRu+rx43hiamk+oz6cY+ecaviavE+0Lt2jFjuM2zOtvl3Q4/PNHCwd3YrHafvDpJESFmhnMCZb8YfQl304S/8w==}
-    peerDependencies:
-      '@tanstack/react-query': ^5.80.7
-      react: ^18 || ^19
 
   '@tanstack/react-query@5.80.7':
     resolution: {integrity: sha512-u2F0VK6+anItoEvB3+rfvTO9GEh2vb00Je05OwlUe/A0lkJBgW1HckiY3f9YZa+jx6IOe4dHPh10dyp9aY3iRQ==}
@@ -2183,10 +2153,6 @@ packages:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
     engines: {node: '>=4.0'}
 
-  jwt-decode@4.0.0:
-    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
-    engines: {node: '>=18'}
-
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -2403,10 +2369,6 @@ packages:
     resolution: {integrity: sha512-gXah6aZrcUxjWg2zR2MwouP2eHlCBzdV4pygudehaKXSGW4v2AsRQUK+lwwXhii6KFZcunEnmSUoYp5CXibxtA==}
     engines: {node: '>= 0.4'}
 
-  oidc-client-ts@3.3.0:
-    resolution: {integrity: sha512-t13S540ZwFOEZKLYHJwSfITugupW4uYLwuQSSXyKH/wHwZ+7FvgHE7gnNJh1YQIZ1Yd1hKSRjqeXGSUtS0r9JA==}
-    engines: {node: '>=18'}
-
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
@@ -2529,13 +2491,6 @@ packages:
     peerDependencies:
       '@types/react': '>=18'
       react: '>=18'
-
-  react-oidc-context@3.3.0:
-    resolution: {integrity: sha512-302T/ma4AOVAxrHdYctDSKXjCq9KNHT564XEO2yOPxRfxEP58xa4nz+GQinNl8x7CnEXECSM5JEjQJk3Cr5BvA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      oidc-client-ts: ^3.1.0
-      react: '>=16.14.0'
 
   react-refresh@0.17.0:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
@@ -3655,15 +3610,6 @@ snapshots:
       tinyduration: 3.4.1
       tslib: 2.8.1
 
-  '@microsoft/kiota-bundle@1.0.0-preview.95':
-    dependencies:
-      '@microsoft/kiota-abstractions': 1.0.0-preview.95
-      '@microsoft/kiota-http-fetchlibrary': 1.0.0-preview.95
-      '@microsoft/kiota-serialization-form': 1.0.0-preview.95
-      '@microsoft/kiota-serialization-json': 1.0.0-preview.95
-      '@microsoft/kiota-serialization-multipart': 1.0.0-preview.95
-      '@microsoft/kiota-serialization-text': 1.0.0-preview.95
-
   '@microsoft/kiota-http-fetchlibrary@1.0.0-preview.95':
     dependencies:
       '@microsoft/kiota-abstractions': 1.0.0-preview.95
@@ -3882,21 +3828,6 @@ snapshots:
   '@tanstack/history@1.120.17': {}
 
   '@tanstack/query-core@5.80.7': {}
-
-  '@tanstack/query-persist-client-core@5.80.7':
-    dependencies:
-      '@tanstack/query-core': 5.80.7
-
-  '@tanstack/query-sync-storage-persister@5.80.7':
-    dependencies:
-      '@tanstack/query-core': 5.80.7
-      '@tanstack/query-persist-client-core': 5.80.7
-
-  '@tanstack/react-query-persist-client@5.80.7(@tanstack/react-query@5.80.7(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      '@tanstack/query-persist-client-core': 5.80.7
-      '@tanstack/react-query': 5.80.7(react@19.1.0)
-      react: 19.1.0
 
   '@tanstack/react-query@5.80.7(react@19.1.0)':
     dependencies:
@@ -5424,8 +5355,6 @@ snapshots:
       object.assign: 4.1.7
       object.values: 1.2.1
 
-  jwt-decode@4.0.0: {}
-
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -5766,10 +5695,6 @@ snapshots:
       define-properties: 1.2.1
       es-object-atoms: 1.1.1
 
-  oidc-client-ts@3.3.0:
-    dependencies:
-      jwt-decode: 4.0.0
-
   optionator@0.9.4:
     dependencies:
       deep-is: 0.1.4
@@ -5900,11 +5825,6 @@ snapshots:
       vfile: 6.0.3
     transitivePeerDependencies:
       - supports-color
-
-  react-oidc-context@3.3.0(oidc-client-ts@3.3.0)(react@19.1.0):
-    dependencies:
-      oidc-client-ts: 3.3.0
-      react: 19.1.0
 
   react-refresh@0.17.0: {}
 

@@ -10,11 +10,9 @@ import {
   Divider,
   useTheme,
 } from "@mui/material";
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Chat as ChatIcon,
-} from "@mui/icons-material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ChatIcon from "@mui/icons-material/Chat";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useChatContext } from "@/contexts/ChatContext";
 import { useCallback } from "react";
